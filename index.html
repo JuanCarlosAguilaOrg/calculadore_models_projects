@@ -1,0 +1,409 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Calculadora de costos IA - MVP Marketing</title>
+    <style>
+        :root {
+            --bg: #f4f6f8;
+            --card: #fff;
+            --text: #17202a;
+            --muted: #667085;
+            --line: #d9dee5;
+            --accent: #2563eb;
+            --good: #15803d
+        }
+
+        * {
+            box-sizing: border-box
+        }
+
+        body {
+            margin: 0;
+            font-family: Segoe UI, Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text)
+        }
+
+        header {
+            background: #111827;
+            color: #fff;
+            padding: 24px 5vw
+        }
+
+        header h1 {
+            margin: 0 0 6px;
+            font-size: 25px
+        }
+
+        header p {
+            margin: 0;
+            color: #cbd5e1
+        }
+
+        main {
+            max-width: 1400px;
+            margin: 24px auto;
+            padding: 0 18px
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 16px
+        }
+
+        .card {
+            background: #fff;
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            padding: 18px;
+            box-shadow: 0 2px 8px #00000008
+        }
+
+        .s12 {
+            grid-column: span 12
+        }
+
+        .s8 {
+            grid-column: span 8
+        }
+
+        .s6 {
+            grid-column: span 6
+        }
+
+        .s4 {
+            grid-column: span 4
+        }
+
+        h2 {
+            font-size: 18px;
+            margin: 0 0 14px
+        }
+
+        .hint {
+            font-size: 12px;
+            color: var(--muted)
+        }
+
+        .fields {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px
+        }
+
+        .field label {
+            display: block;
+            font-size: 12px;
+            font-weight: 650;
+            margin-bottom: 5px
+        }
+
+        .field input,
+        .field select {
+            width: 100%;
+            padding: 9px;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            background: #fff
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px
+        }
+
+        th,
+        td {
+            padding: 9px;
+            border-bottom: 1px solid var(--line);
+            text-align: left
+        }
+
+        th {
+            background: #f8fafc
+        }
+
+        td input,
+        td select {
+            width: 100%;
+            padding: 7px;
+            border: 1px solid var(--line);
+            border-radius: 6px
+        }
+
+        .scroll {
+            overflow: auto
+        }
+
+        .kpis {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px
+        }
+
+        .kpi {
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            padding: 14px
+        }
+
+        .label {
+            font-size: 12px;
+            color: var(--muted)
+        }
+
+        .value {
+            font-size: 22px;
+            font-weight: 750;
+            margin-top: 5px
+        }
+
+        .total {
+            font-size: 22px;
+            font-weight: 800
+        }
+
+        .good {
+            color: var(--good)
+        }
+
+        button {
+            border: 0;
+            border-radius: 8px;
+            padding: 9px 13px;
+            cursor: pointer;
+            background: var(--accent);
+            color: white;
+            font-weight: 650
+        }
+
+        button.secondary {
+            background: #e5e7eb;
+            color: #111827
+        }
+
+        .actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 12px
+        }
+
+        @media(max-width:900px) {
+
+            .s8,
+            .s6,
+            .s4 {
+                grid-column: span 12
+            }
+
+            .fields {
+                grid-template-columns: repeat(2, 1fr)
+            }
+
+            .kpis {
+                grid-template-columns: repeat(2, 1fr)
+            }
+        }
+
+        @media(max-width:550px) {
+
+            .fields,
+            .kpis {
+                grid-template-columns: 1fr
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>Calculadora de costos IA - MVP de marketing</h1>
+        <p>20 imágenes + estrategia mensual + tendencias + copy + infraestructura + margen.</p>
+    </header>
+    <main>
+        <div class="grid">
+            <section class="card s8">
+                <h2>1. Volumen mensual</h2>
+                <div class="fields">
+                    <div class="field"><label>Usuarios / clientes</label><input id="users" type="number" value="100"
+                            min="0"></div>
+                    <div class="field"><label>Publicaciones por usuario</label><input id="posts" type="number"
+                            value="20" min="0"></div>
+                    <div class="field"><label>Imágenes por publicación</label><input id="images" type="number" value="1"
+                            min="0"></div>
+                    <div class="field"><label>Regeneraciones de imagen (%)</label><input id="regen" type="number"
+                            value="10" min="0" max="100"></div>
+                    <div class="field"><label>Estrategias por usuario / mes</label><input id="strategies" type="number"
+                            value="1" min="0"></div>
+                    <div class="field"><label>Investigaciones / estrategia</label><input id="researches" type="number"
+                            value="1" min="0"></div>
+                    <div class="field"><label>Consultas / investigación</label><input id="searches" type="number"
+                            value="5" min="0"></div>
+                    <div class="field"><label>Investigación</label><select id="researchScope">
+                            <option value="perUser">Una por usuario</option>
+                            <option value="shared">Compartida entre usuarios</option>
+                        </select></div>
+                </div>
+                <p class="hint">Base propuesta: 20 publicaciones y 20 imágenes por usuario al mes.</p>
+            </section>
+            <section class="card s4">
+                <h2>2. Moneda y precio</h2>
+                <div class="fields" style="grid-template-columns:1fr 1fr">
+                    <div class="field"><label>USD → MXN</label><input id="fx" type="number" value="18.5" step="0.01">
+                    </div>
+                    <div class="field"><label>Margen deseado (%)</label><input id="margin" type="number" value="50"
+                            min="0" max="99"></div>
+                </div>
+                <p class="hint">Los precios de API se guardan en USD.</p>
+                <div class="actions"><button onclick="save()">Guardar</button><button class="secondary"
+                        onclick="resetAll()">Restaurar</button></div>
+            </section>
+            <section class="card s12">
+                <h2>3. Modelos y precios</h2>
+                <p class="hint">Texto: USD por 1 millón de tokens. Imagen/búsqueda: USD por unidad. Sustituye los
+                    valores por los precios vigentes del proveedor.</p>
+                <div class="scroll">
+                    <table id="modelsTable">
+                        <thead>
+                            <tr>
+                                <th>Operación</th>
+                                <th>Proveedor</th>
+                                <th>Modelo</th>
+                                <th>Input $/1M</th>
+                                <th>Output $/1M</th>
+                                <th>Imagen $/unidad</th>
+                                <th>Búsqueda $/consulta</th>
+                                <th>Activo</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+                <div class="actions"><button onclick="addModel()">+ Agregar modelo</button></div>
+            </section>
+            <section class="card s12">
+                <h2>4. Operaciones del producto</h2>
+                <p class="hint">La estrategia puede usar un modelo distinto al copy; imagen y tendencias se costean
+                    aparte.</p>
+                <div class="scroll">
+                    <table id="opsTable">
+                        <thead>
+                            <tr>
+                                <th>Operación</th>
+                                <th>Modelo</th>
+                                <th>Input tokens</th>
+                                <th>Output tokens</th>
+                                <th>Unidad mensual</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </section>
+            <section class="card s6">
+                <h2>5. Infraestructura mensual</h2>
+                <div class="fields">
+                    <div class="field"><label>Hosting USD</label><input id="hosting" type="number" value="20"
+                            step=".01"></div>
+                    <div class="field"><label>Base de datos USD</label><input id="db" type="number" value="10"
+                            step=".01"></div>
+                    <div class="field"><label>Storage/CDN USD</label><input id="storage" type="number" value="10"
+                            step=".01"></div>
+                    <div class="field"><label>Email/WhatsApp/otros USD</label><input id="external" type="number"
+                            value="20" step=".01"></div>
+                    <div class="field"><label>Dominio prorrateado USD</label><input id="domain" type="number" value="2"
+                            step=".01"></div>
+                    <div class="field"><label>Mantenimiento USD</label><input id="maintenance" type="number" value="0"
+                            step=".01"></div>
+                </div>
+            </section>
+            <section class="card s6">
+                <h2>6. Resultados</h2>
+                <div class="kpis">
+                    <div class="kpi">
+                        <div class="label">Costo IA</div>
+                        <div id="aiCost" class="value">$0</div>
+                    </div>
+                    <div class="kpi">
+                        <div class="label">Infraestructura</div>
+                        <div id="infraCost" class="value">$0</div>
+                    </div>
+                    <div class="kpi">
+                        <div class="label">Costo total</div>
+                        <div id="totalCost" class="value">$0</div>
+                    </div>
+                    <div class="kpi">
+                        <div class="label">Costo / usuario</div>
+                        <div id="perUser" class="value">$0</div>
+                    </div>
+                </div>
+                <hr style="border:0;border-top:1px solid var(--line);margin:18px 0">
+                <div class="fields">
+                    <div>
+                        <div class="label">Costo / publicación</div>
+                        <div id="perPost" class="total">$0</div>
+                    </div>
+                    <div>
+                        <div class="label">Precio sugerido / usuario</div>
+                        <div id="price" class="total good">$0</div>
+                    </div>
+                    <div>
+                        <div class="label">Utilidad / usuario</div>
+                        <div id="profit" class="total good">$0</div>
+                    </div>
+                    <div>
+                        <div class="label">Margen efectivo</div>
+                        <div id="effectiveMargin" class="total">0%</div>
+                    </div>
+                </div>
+            </section>
+            <section class="card s12">
+                <h2>7. Desglose mensual</h2>
+                <div class="scroll">
+                    <table id="breakdown">
+                        <thead>
+                            <tr>
+                                <th>Concepto</th>
+                                <th>Cantidad</th>
+                                <th>Costo USD</th>
+                                <th>Costo MXN</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </section>
+            <section class="card s12">
+                <h2>8. Escenarios</h2>
+                <div class="fields">
+                    <div class="field"><label>Escenario</label><select id="scenario" onchange="scenarioValues()">
+                            <option value="custom">Personalizado</option>
+                            <option value="low">Bajo</option>
+                            <option value="base" selected>Base</option>
+                            <option value="high">Alto</option>
+                        </select></div>
+                    <div class="field"><label>Usuarios</label><input id="sUsers" type="number" value="100"></div>
+                    <div class="field"><label>Imágenes / usuario</label><input id="sImages" type="number" value="20">
+                    </div>
+                    <div class="field"><label>Regeneraciones %</label><input id="sRegen" type="number" value="10"></div>
+                </div>
+                <div class="actions"><button onclick="applyScenario()">Aplicar escenario</button></div>
+            </section>
+        </div>
+    </main>
+    <script>
+        const defaults = { models: [{ id: 'strategy', op: 'Estrategia mensual', provider: 'OpenAI', model: 'Modelo de estrategia', input: 2, output: 10, image: 0, search: 0, active: true }, { id: 'copy', op: 'Generación de copy', provider: 'Google', model: 'Modelo de texto económico', input: .15, output: 1.25, image: 0, search: 0, active: true }, { id: 'image', op: 'Generación de imagen', provider: 'Google', model: 'Modelo de imagen', input: 0, output: 0, image: .04, search: 0, active: true }, { id: 'research', op: 'Investigación de tendencias', provider: 'Google', model: 'Gemini + Search', input: .15, output: 1.25, image: 0, search: .01, active: true }], ops: [{ id: 'strategy', label: 'Estrategia mensual', model: 'strategy', input: 8000, output: 4000, unit: 'strategies' }, { id: 'copy', label: 'Copy por publicación', model: 'copy', input: 1500, output: 500, unit: 'posts' }, { id: 'image', label: 'Imagen por publicación', model: 'image', input: 0, output: 0, unit: 'images' }, { id: 'research', label: 'Análisis de tendencias', model: 'research', input: 3000, output: 1500, unit: 'research' }] };
+        let models = JSON.parse(localStorage.getItem('aiCalcModels') || 'null') || structuredClone(defaults.models), ops = JSON.parse(localStorage.getItem('aiCalcOps') || 'null') || structuredClone(defaults.ops); const $ = id => document.getElementById(id), num = id => Number($(id).value) || 0, money = n => '$' + (Number(n) || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); function getM(id) { return models.find(x => x.id === id) || models[0] } function opCost(o) { let m = getM(o.model); return o.input / 1e6 * m.input + o.output / 1e6 * m.output }
+        function render() { let b = $('modelsTable').querySelector('tbody'); b.innerHTML = ''; models.forEach((m, i) => { let r = document.createElement('tr'); r.innerHTML = `<td>${m.op}</td><td><input value="${m.provider}" onchange="models[${i}].provider=this.value;calc()"></td><td><input value="${m.model}" onchange="models[${i}].model=this.value;calc()"></td><td><input type="number" step=".000001" value="${m.input}" onchange="models[${i}].input=+this.value;calc()"></td><td><input type="number" step=".000001" value="${m.output}" onchange="models[${i}].output=+this.value;calc()"></td><td><input type="number" step=".000001" value="${m.image}" onchange="models[${i}].image=+this.value;calc()"></td><td><input type="number" step=".000001" value="${m.search}" onchange="models[${i}].search=+this.value;calc()"></td><td><input type="checkbox" ${m.active ? 'checked' : ''} onchange="models[${i}].active=this.checked;calc()"></td>`; b.appendChild(r) }); let t = $('opsTable').querySelector('tbody'); t.innerHTML = ''; ops.forEach((o, i) => { let r = document.createElement('tr'); r.innerHTML = `<td>${o.label}</td><td><select onchange="ops[${i}].model=this.value;calc()">${models.map(m => `<option value="${m.id}" ${m.id === o.model ? 'selected' : ''}>${m.provider} — ${m.model}</option>`).join('')}</select></td><td><input type="number" value="${o.input}" onchange="ops[${i}].input=+this.value;calc()"></td><td><input type="number" value="${o.output}" onchange="ops[${i}].output=+this.value;calc()"></td><td>${o.unit}</td>`; t.appendChild(r) }) }
+        function calc() { let u = num('users'), pp = num('posts'), ip = num('images'), rg = num('regen') / 100, sp = num('strategies'), rp = num('researches'), sq = num('searches'), posts = u * pp, images = posts * ip, regen = images * rg, strats = u * sp, rc = $('researchScope').value === 'shared' ? rp : u * rp, queries = rc * sq, s = ops.find(o => o.id === 'strategy'), c = ops.find(o => o.id === 'copy'), im = ops.find(o => o.id === 'image'), re = ops.find(o => o.id === 'research'), mc = getM(im.model), mr = getM(re.model), cs = strats * opCost(s), cc = posts * opCost(c), ci = images * mc.image, cr = regen * mc.image, ct = rc * opCost(re) + queries * mr.search, ai = cs + cc + ci + cr + ct, infra = num('hosting') + num('db') + num('storage') + num('external') + num('domain') + num('maintenance'), total = ai + infra, fx = num('fx'), pu = total / Math.max(u, 1), pup = posts ? total / posts : 0, margin = num('margin') / 100, price = pu / (1 - margin), profit = price - pu, eff = price ? profit / price : 0; $('aiCost').textContent = money(ai); $('infraCost').textContent = money(infra); $('totalCost').textContent = money(total); $('perUser').textContent = money(pu); $('perPost').textContent = money(pup); $('price').textContent = money(price * fx) + ' MXN'; $('profit').textContent = money(profit * fx) + ' MXN'; $('effectiveMargin').textContent = (eff * 100).toFixed(1) + '%'; let rows = [['Estrategias mensuales', strats, cs], ['Copys', posts, cc], ['Imágenes', images, ci], ['Regeneraciones de imagen', regen, cr], ['Investigaciones de tendencias', rc, ct], ['Consultas de búsqueda', queries, queries * mr.search], ['Infraestructura', 1, infra]], tb = $('breakdown').querySelector('tbody'); tb.innerHTML = ''; rows.forEach(x => { let r = document.createElement('tr'); r.innerHTML = `<td>${x[0]}</td><td>${x[1].toLocaleString('es-MX', { maximumFractionDigits: 2 })}</td><td>${money(x[2])}</td><td>${money(x[2] * fx)}</td>`; tb.appendChild(r) }) }
+        function addModel() { let id = 'custom' + Date.now(); models.push({ id, op: 'Modelo personalizado', provider: 'Proveedor', model: 'Nuevo modelo', input: 0, output: 0, image: 0, search: 0, active: true }); render(); calc() } function save() { localStorage.setItem('aiCalcModels', JSON.stringify(models)); localStorage.setItem('aiCalcOps', JSON.stringify(ops)); alert('Configuración guardada en este navegador.') } function resetAll() { localStorage.removeItem('aiCalcModels'); localStorage.removeItem('aiCalcOps'); models = structuredClone(defaults.models); ops = structuredClone(defaults.ops); render(); calc() } function scenarioValues() { let v = { low: [25, 20, 5], base: [100, 20, 10], high: [500, 20, 20] }[$('scenario').value]; if (v) { $('sUsers').value = v[0]; $('sImages').value = v[1]; $('sRegen').value = v[2] } } function applyScenario() { $('users').value = $('sUsers').value; $('posts').value = $('sImages').value; $('images').value = 1; $('regen').value = $('sRegen').value; calc() } document.querySelectorAll('input,select').forEach(e => e.addEventListener('input', calc)); render(); calc();
+    </script>
+</body>
+
+</html>
