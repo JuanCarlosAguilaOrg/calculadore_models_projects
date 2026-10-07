@@ -435,11 +435,588 @@
         </div>
     </section>
     <div id="app"></div>
-    <div class="legend"><span><i style="background:#6554c0"></i>Epic</span><span><i
-                style="background:#0c66e4"></i>Tarea</span><span><i
-                style="background:#22a06b"></i>Completado</span><span><i
-                style="background:#ff8b00"></i>Hito</span><span>Fuente: <b>proyecto.json</b></span></div>
-    <script>let D = null, W = 38; const $ = x => document.getElementById(x), dt = x => new Date(x + "T12:00:00"), diff = (a, b) => Math.round((b - a) / 86400000), esc = s => String(s).replace(/[&<>"']/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" }[m])), fmt = x => new Intl.DateTimeFormat("es-MX", { day: "2-digit", month: "short" }).format(dt(x)); function days(a, b) { let z = []; for (let d = new Date(a); d <= b; d.setDate(d.getDate() + 1))z.push(new Date(d)); return z } function render() { let p = D.project, s = dt(p.startDate), e = dt(p.endDate), ds = days(s, e), months = []; ds.forEach(d => { let k = d.getFullYear() + "-" + d.getMonth(), m = months.find(x => x.k === k); if (!m) { m = { k, n: new Intl.DateTimeFormat("es-MX", { month: "long", year: "numeric" }).format(d), c: 0 }; months.push(m) } m.c++ }); $("name").textContent = p.name; $("key").textContent = p.key; $("desc").textContent = p.description; $("status").textContent = p.status; $("start").textContent = fmt(p.startDate); $("end").textContent = fmt(p.endDate); let mh = months.map(m => `<div class="month" style="width:${m.c * W}px">${m.n}</div>`).join(''), dh = ds.map(d => { let wd = d.getDay(), today = new Date(), iso = d.toISOString().slice(0, 10), c = (wd === 0 || wd === 6 ? ' weekend' : '') + (iso === today.toISOString().slice(0, 10) ? ' today' : ''); return `<div class="day${c}">${d.getDate()}<br>${['D', 'L', 'M', 'X', 'J', 'V', 'S'][wd]}</div>` }).join(''); let left = D.tasks.map((t, i) => `<div class="row"><div class="cell num">${i + 1}</div><div class="cell taskname"><span class="indent" style="margin-left:${t.parent ? 16 : 0}px"></span>${t.type === 'epic' ? '<button class="expand">⌄</button>' : ''}<span class="icon ${t.type}">${t.type === 'milestone' ? '◆' : t.type === 'epic' ? 'E' : 'T'}</span><span title="${esc(t.name)}">${esc(t.name)}</span></div><div class="cell status"><span class="dot" style="${t.status === 'Done' ? 'background:#22a06b' : ''}"></span>${esc(t.status)}</div><div class="cell progress">${t.progress}%</div></div>`).join(''); let bars = D.tasks.map(t => { let x = diff(s, dt(t.start)) * W + 3, w = Math.max(18, (diff(dt(t.start), dt(t.end)) + 1) * W - 7), c = t.status === 'Done' ? ' done' : t.type === 'epic' ? ' epic' : t.type === 'milestone' ? ' milestone' : ''; return `<div class="bar-row"><div class="bar${c}" style="left:${x}px;width:${w}px" title="${esc(t.key + ' · ' + t.name + ' · ' + t.start + ' → ' + t.end + ' · ' + t.progress + '%')}">${t.type === 'milestone' ? '' : `<span>${t.progress}%</span>`}<div class="fill" style="width:${t.progress}%"></div></div></div>` }).join(''); let width = ds.length * W; $("app").innerHTML = `<div class="layout"><div class="left"><div class="head table-head"><div>#</div><div>Tarea</div><div>Estado</div><div>Progreso</div></div>${left}</div><div class="right"><div class="head timeline-head" style="width:${width}px"><div class="months">${mh}</div><div class="days">${dh}</div></div><div class="bars" style="width:${width}px">${bars}<div id="today" class="today-line"></div></div></div></div>`; let today = new Date(), o = diff(s, today); if (o >= 0 && o <= ds.length) $("today").style.left = (o * W) + "px" } function zoom(n) { W = Math.max(24, Math.min(65, W + n * 7)); render() } fetch("proyecto.json").then(r => r.json()).then(x => { D = x; render() }).catch(e => $("app").innerHTML = `<div style="padding:30px;color:#ae2a19"><b>No se pudo cargar proyecto.json.</b><br>Usa Live Server o un servidor local. Error: ${e.message}</div>`);</script>
-</body>
+
+<div class="legend">
+    <span>
+        <i style="background:#6554c0"></i>
+        Epic
+    </span>
+
+    <span>
+        <i style="background:#0c66e4"></i>
+        Tarea
+    </span>
+
+    <span>
+        <i style="background:#22a06b"></i>
+        Completado
+    </span>
+
+    <span>
+        <i style="background:#ff8b00"></i>
+        Hito
+    </span>
+
+    <span>
+        Fuente: <b>proyecto.json</b>
+    </span>
+</div>
+
+<script>
+    let D = null;
+    let W = 38;
+
+    const $ = x => document.getElementById(x);
+
+    const dt = x =>
+        new Date(x + "T12:00:00");
+
+    const diff = (a, b) =>
+        Math.round((b - a) / 86400000);
+
+    const esc = s =>
+        String(s).replace(
+            /[&<>"']/g,
+            m => ({
+                "&": "&amp;",
+                "<": "&lt;",
+                ">": "&gt;",
+                "\"": "&quot;",
+                "'": "&#39;"
+            }[m])
+        );
+
+    const fmt = x =>
+        new Intl.DateTimeFormat(
+            "es-MX",
+            {
+                day: "2-digit",
+                month: "short"
+            }
+        ).format(dt(x));
+
+
+    function days(a, b) {
+
+        let z = [];
+
+        for (
+            let d = new Date(a);
+            d <= b;
+            d.setDate(d.getDate() + 1)
+        ) {
+            z.push(new Date(d));
+        }
+
+        return z;
+    }
+
+
+    function render() {
+
+        let p = D.project;
+
+        let s = dt(p.startDate);
+        let e = dt(p.endDate);
+
+        let ds = days(s, e);
+
+        let months = [];
+
+
+        /*
+         * Construcción de meses
+         */
+        ds.forEach(d => {
+
+            let k =
+                d.getFullYear() +
+                "-" +
+                d.getMonth();
+
+            let m =
+                months.find(x => x.k === k);
+
+
+            if (!m) {
+
+                m = {
+                    k,
+                    n: new Intl.DateTimeFormat(
+                        "es-MX",
+                        {
+                            month: "long",
+                            year: "numeric"
+                        }
+                    ).format(d),
+
+                    c: 0
+                };
+
+                months.push(m);
+            }
+
+            m.c++;
+        });
+
+
+        /*
+         * Información general del proyecto
+         */
+        $("name").textContent =
+            p.name;
+
+        $("key").textContent =
+            p.key;
+
+        $("desc").textContent =
+            p.description;
+
+        $("status").textContent =
+            p.status;
+
+        $("start").textContent =
+            fmt(p.startDate);
+
+        $("end").textContent =
+            fmt(p.endDate);
+
+
+        /*
+         * Encabezado de meses
+         */
+        let mh = months
+            .map(m => `
+                <div
+                    class="month"
+                    style="width:${m.c * W}px"
+                >
+                    ${m.n}
+                </div>
+            `)
+            .join('');
+
+
+        /*
+         * Encabezado de días
+         */
+        let dh = ds
+            .map(d => {
+
+                let wd =
+                    d.getDay();
+
+                let today =
+                    new Date();
+
+                let iso =
+                    d.toISOString()
+                        .slice(0, 10);
+
+                let c =
+                    (wd === 0 || wd === 6
+                        ? ' weekend'
+                        : '') +
+
+                    (
+                        iso ===
+                        today
+                            .toISOString()
+                            .slice(0, 10)
+                            ? ' today'
+                            : ''
+                    );
+
+
+                return `
+                    <div class="day${c}">
+                        ${d.getDate()}
+                        <br>
+                        ${[
+                            'D',
+                            'L',
+                            'M',
+                            'X',
+                            'J',
+                            'V',
+                            'S'
+                        ][wd]}
+                    </div>
+                `;
+
+            })
+            .join('');
+
+
+        /*
+         * Columna izquierda:
+         * número, tarea, estado y progreso
+         */
+        let left = D.tasks
+            .map((t, i) => {
+
+                return `
+                    <div class="row">
+
+                        <div class="cell num">
+                            ${i + 1}
+                        </div>
+
+
+                        <div class="cell taskname">
+
+                            <span
+                                class="indent"
+                                style="
+                                    margin-left:
+                                    ${t.parent ? 16 : 0}px
+                                "
+                            ></span>
+
+
+                            ${
+                                t.type === 'epic'
+                                    ? `
+                                        <button
+                                            class="expand"
+                                        >
+                                            ⌄
+                                        </button>
+                                    `
+                                    : ''
+                            }
+
+
+                            <span
+                                class="icon ${t.type}"
+                            >
+                                ${
+                                    t.type === 'milestone'
+                                        ? '◆'
+                                        : t.type === 'epic'
+                                            ? 'E'
+                                            : 'T'
+                                }
+                            </span>
+
+
+                            <span
+                                title="${esc(t.name)}"
+                            >
+                                ${esc(t.name)}
+                            </span>
+
+                        </div>
+
+
+                        <div class="cell status">
+
+                            <span
+                                class="dot"
+                                style="
+                                    ${
+                                        t.status === 'Done'
+                                            ? 'background:#22a06b'
+                                            : ''
+                                    }
+                                "
+                            ></span>
+
+                            ${esc(t.status)}
+
+                        </div>
+
+
+                        <div class="cell progress">
+                            ${t.progress}%
+                        </div>
+
+                    </div>
+                `;
+
+            })
+            .join('');
+
+
+        /*
+         * Barras del Gantt
+         */
+        let bars = D.tasks
+            .map(t => {
+
+                let x =
+                    diff(
+                        s,
+                        dt(t.start)
+                    ) * W + 3;
+
+
+                let w =
+                    Math.max(
+                        18,
+                        (
+                            diff(
+                                dt(t.start),
+                                dt(t.end)
+                            ) + 1
+                        ) * W - 7
+                    );
+
+
+                let c =
+                    t.status === 'Done'
+                        ? ' done'
+                        : t.type === 'epic'
+                            ? ' epic'
+                            : t.type === 'milestone'
+                                ? ' milestone'
+                                : '';
+
+
+                return `
+                    <div class="bar-row">
+
+                        <div
+                            class="bar${c}"
+                            style="
+                                left:${x}px;
+                                width:${w}px
+                            "
+                            title="${esc(
+                                t.key +
+                                ' · ' +
+                                t.name +
+                                ' · ' +
+                                t.start +
+                                ' → ' +
+                                t.end +
+                                ' · ' +
+                                t.progress +
+                                '%'
+                            )}"
+                        >
+
+                            ${
+                                t.type === 'milestone'
+                                    ? ''
+                                    : `
+                                        <span>
+                                            ${t.progress}%
+                                        </span>
+                                    `
+                            }
+
+
+                            <div
+                                class="fill"
+                                style="
+                                    width:${t.progress}%
+                                "
+                            ></div>
+
+                        </div>
+
+                    </div>
+                `;
+
+            })
+            .join('');
+
+
+        /*
+         * Ancho total del timeline
+         */
+        let width =
+            ds.length * W;
+
+
+        /*
+         * Construcción completa del Gantt
+         */
+        $("app").innerHTML = `
+
+            <div class="layout">
+
+                <!-- PANEL IZQUIERDO -->
+
+                <div class="left">
+
+                    <div
+                        class="head table-head"
+                    >
+
+                        <div>
+                            #
+                        </div>
+
+                        <div>
+                            Tarea
+                        </div>
+
+                        <div>
+                            Estado
+                        </div>
+
+                        <div>
+                            Progreso
+                        </div>
+
+                    </div>
+
+
+                    ${left}
+
+                </div>
+
+
+                <!-- TIMELINE -->
+
+                <div class="right">
+
+                    <div
+                        class="head timeline-head"
+                        style="
+                            width:${width}px
+                        "
+                    >
+
+                        <div class="months">
+                            ${mh}
+                        </div>
+
+
+                        <div class="days">
+                            ${dh}
+                        </div>
+
+                    </div>
+
+
+                    <div
+                        class="bars"
+                        style="
+                            width:${width}px
+                        "
+                    >
+
+                        ${bars}
+
+
+                        <div
+                            id="today"
+                            class="today-line"
+                        ></div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        `;
+
+
+        /*
+         * Línea de fecha actual
+         */
+        let today =
+            new Date();
+
+        let o =
+            diff(
+                s,
+                today
+            );
+
+
+        if (
+            o >= 0 &&
+            o <= ds.length
+        ) {
+
+            $("today").style.left =
+                (o * W) + "px";
+
+        }
+
+    }
+
+
+    /*
+     * Zoom del timeline
+     */
+    function zoom(n) {
+
+        W =
+            Math.max(
+                24,
+                Math.min(
+                    65,
+                    W + n * 7
+                )
+            );
+
+        render();
+    }
+
+
+    /*
+     * Cargar banco de datos JSON
+     */
+    fetch("proyecto.json")
+
+        .then(r => {
+
+            if (!r.ok) {
+                throw new Error(
+                    "No se pudo cargar proyecto.json"
+                );
+            }
+
+            return r.json();
+        })
+
+        .then(x => {
+
+            D = x;
+
+            render();
+
+        })
+
+        .catch(e => {
+
+            $("app").innerHTML = `
+
+                <div
+                    style="
+                        padding:30px;
+                        color:#ae2a19
+                    "
+                >
+
+                    <b>
+                        No se pudo cargar
+                        proyecto.json.
+                    </b>
+
+                    <br><br>
+
+                    Usa Live Server
+                    o un servidor local.
+
+                    <br><br>
+
+                    Error:
+                    ${e.message}
+
+                </div>
+
+            `;
+
+        });
+
+</script>
+    </body>
 
 </html>
