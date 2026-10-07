@@ -1,0 +1,445 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Proyecto MKT · Gantt</title>
+    <style>
+        :root {
+            --blue: #0c66e4;
+            --navy: #172b4d;
+            --bg: #f7f8fa;
+            --text: #172b4d;
+            --muted: #6b778c;
+            --line: #dfe1e6;
+            --green: #22a06b;
+            --purple: #6554c0;
+            --orange: #ff8b00
+        }
+
+        * {
+            box-sizing: border-box
+        }
+
+        body {
+            margin: 0;
+            background: var(--bg);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+            color: var(--text);
+            font-size: 14px
+        }
+
+        .topnav {
+            height: 56px;
+            background: var(--navy);
+            display: flex;
+            align-items: center;
+            padding: 0 28px;
+            gap: 7px;
+            color: white;
+            box-shadow: 0 2px 7px #091e4226;
+            position: sticky;
+            top: 0;
+            z-index: 100
+        }
+
+        .brand {
+            font-weight: 800;
+            margin-right: 20px
+        }
+
+        .navlink {
+            color: #dfe7f3;
+            text-decoration: none;
+            padding: 9px 13px;
+            border-radius: 6px
+        }
+
+        .navlink:hover {
+            background: #ffffff14
+        }
+
+        .navlink.active {
+            background: #0c66e4;
+            color: white
+        }
+
+        .project-head {
+            background: white;
+            border-bottom: 1px solid var(--line);
+            padding: 22px 30px 17px
+        }
+
+        .crumb {
+            font-size: 12px;
+            color: var(--muted);
+            margin-bottom: 8px
+        }
+
+        .title {
+            display: flex;
+            align-items: center;
+            gap: 10px
+        }
+
+        .title h1 {
+            font-size: 24px;
+            margin: 0
+        }
+
+        .key {
+            font-size: 12px;
+            background: #deebff;
+            color: #0747a6;
+            padding: 4px 7px;
+            border-radius: 4px;
+            font-weight: 700
+        }
+
+        .subtitle {
+            color: var(--muted);
+            margin: 8px 0 15px
+        }
+
+        .toolbar {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap
+        }
+
+        .btn {
+            border: 0;
+            background: #0c66e4;
+            color: white;
+            border-radius: 5px;
+            padding: 8px 12px;
+            font-weight: 650;
+            cursor: pointer
+        }
+
+        .btn.secondary {
+            background: white;
+            color: var(--text);
+            border: 1px solid var(--line)
+        }
+
+        .summary {
+            display: flex;
+            gap: 8px;
+            margin-left: auto
+        }
+
+        .pill {
+            background: #f1f2f4;
+            border-radius: 14px;
+            padding: 5px 10px;
+            font-size: 12px
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: 440px minmax(700px, 1fr);
+            margin: 18px 20px 30px;
+            background: white;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px #091e4220
+        }
+
+        .left {
+            border-right: 1px solid var(--line);
+            background: white;
+            z-index: 2
+        }
+
+        .right {
+            overflow: auto
+        }
+
+        .head {
+            height: 86px;
+            border-bottom: 1px solid var(--line);
+            background: #f7f8f9
+        }
+
+        .table-head {
+            display: grid;
+            grid-template-columns: 50px 1fr 100px 70px;
+            align-items: end;
+            padding: 0 10px 11px;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--muted)
+        }
+
+        .timeline-head {
+            min-width: 1200px
+        }
+
+        .months {
+            height: 36px;
+            display: flex;
+            border-bottom: 1px solid var(--line)
+        }
+
+        .month {
+            font-weight: 700;
+            font-size: 12px;
+            text-align: center;
+            border-right: 1px solid var(--line);
+            padding: 10px 0;
+            background: #fafbfc
+        }
+
+        .days {
+            height: 50px;
+            display: flex
+        }
+
+        .day {
+            width: 38px;
+            min-width: 38px;
+            border-right: 1px solid #eef0f2;
+            text-align: center;
+            font-size: 10px;
+            color: var(--muted);
+            padding-top: 8px
+        }
+
+        .day.weekend {
+            background: #f7f8fa
+        }
+
+        .day.today {
+            background: #deebff;
+            color: #0747a6;
+            font-weight: 800
+        }
+
+        .row {
+            height: 50px;
+            border-bottom: 1px solid #ebecf0;
+            display: flex;
+            align-items: center
+        }
+
+        .row:hover {
+            background: #f7f8fa
+        }
+
+        .cell {
+            padding: 0 8px;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis
+        }
+
+        .num {
+            width: 50px;
+            color: #97a0af;
+            font-size: 11px
+        }
+
+        .taskname {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            min-width: 0
+        }
+
+        .indent {
+            width: 16px;
+            flex: none
+        }
+
+        .expand {
+            width: 18px;
+            height: 18px;
+            border: 0;
+            background: none;
+            color: #6b778c
+        }
+
+        .icon {
+            width: 18px;
+            height: 18px;
+            border-radius: 4px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: 800;
+            color: white;
+            flex: none
+        }
+
+        .icon.epic {
+            background: var(--purple)
+        }
+
+        .icon.task {
+            background: var(--blue)
+        }
+
+        .icon.milestone {
+            background: var(--orange);
+            transform: rotate(45deg);
+            border-radius: 2px
+        }
+
+        .status {
+            width: 100px;
+            font-size: 11px
+        }
+
+        .dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 5px;
+            background: #97a0af
+        }
+
+        .progress {
+            width: 70px;
+            font-size: 11px;
+            color: #5e6c84
+        }
+
+        .bars {
+            position: relative;
+            min-width: 1200px
+        }
+
+        .bar-row {
+            height: 50px;
+            border-bottom: 1px solid #ebecf0;
+            position: relative;
+            background-image: repeating-linear-gradient(to right, transparent 0, transparent 37px, #eef0f2 38px)
+        }
+
+        .bar {
+            position: absolute;
+            top: 13px;
+            height: 24px;
+            border-radius: 5px;
+            background: var(--blue);
+            color: white;
+            font-size: 10px;
+            font-weight: 700;
+            line-height: 24px;
+            padding: 0 8px;
+            white-space: nowrap;
+            overflow: hidden;
+            box-shadow: 0 1px 2px #091e4240;
+            transition: .18s ease
+        }
+
+        .bar:hover {
+            transform: translateY(-2px);
+            filter: brightness(1.05);
+            box-shadow: 0 5px 12px #091e4230
+        }
+
+        .bar.done {
+            background: var(--green)
+        }
+
+        .bar.epic {
+            background: var(--purple)
+        }
+
+        .bar.milestone {
+            background: var(--orange);
+            width: 18px !important;
+            height: 18px;
+            top: 16px;
+            padding: 0;
+            transform: rotate(45deg);
+            border-radius: 2px
+        }
+
+        .fill {
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            background: #0002;
+            border-radius: 5px 0 0 5px
+        }
+
+        .bar span {
+            position: relative;
+            z-index: 2
+        }
+
+        .today-line {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: var(--blue);
+            opacity: .45;
+            z-index: 4
+        }
+
+        .legend {
+            display: flex;
+            gap: 16px;
+            margin: 0 20px 20px;
+            color: var(--muted);
+            font-size: 12px
+        }
+
+        .legend i {
+            width: 9px;
+            height: 9px;
+            border-radius: 3px;
+            display: inline-block;
+            margin-right: 5px
+        }
+
+        @media(max-width:1000px) {
+            .layout {
+                grid-template-columns: 360px minmax(650px, 1fr)
+            }
+
+            .summary {
+                margin-left: 0
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="topnav">
+        <div class="brand">Vulpex · MVP</div><a class="navlink" href="index.html">⌂ Home</a><a class="navlink active"
+            href="proyecto.html">▦ Proyecto</a>
+    </nav>
+    <section class="project-head">
+        <div class="crumb">Proyectos / MVP Marketing IA / Cronograma</div>
+        <div class="title">
+            <h1 id="name">Cargando…</h1><span class="key" id="key">MKT</span>
+        </div>
+        <div class="subtitle" id="desc"></div>
+        <div class="toolbar"><button class="btn" onclick="location.reload()">↻ Actualizar</button><button
+                class="btn secondary" onclick="zoom(-1)">− Zoom</button><button class="btn secondary"
+                onclick="zoom(1)">+ Zoom</button>
+            <div class="summary"><span class="pill">Estado <b id="status">—</b></span><span class="pill">Inicio <b
+                        id="start">—</b></span><span class="pill">Entrega <b id="end">—</b></span></div>
+        </div>
+    </section>
+    <div id="app"></div>
+    <div class="legend"><span><i style="background:#6554c0"></i>Epic</span><span><i
+                style="background:#0c66e4"></i>Tarea</span><span><i
+                style="background:#22a06b"></i>Completado</span><span><i
+                style="background:#ff8b00"></i>Hito</span><span>Fuente: <b>proyecto.json</b></span></div>
+    <script>let D = null, W = 38; const $ = x => document.getElementById(x), dt = x => new Date(x + "T12:00:00"), diff = (a, b) => Math.round((b - a) / 86400000), esc = s => String(s).replace(/[&<>"']/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" }[m])), fmt = x => new Intl.DateTimeFormat("es-MX", { day: "2-digit", month: "short" }).format(dt(x)); function days(a, b) { let z = []; for (let d = new Date(a); d <= b; d.setDate(d.getDate() + 1))z.push(new Date(d)); return z } function render() { let p = D.project, s = dt(p.startDate), e = dt(p.endDate), ds = days(s, e), months = []; ds.forEach(d => { let k = d.getFullYear() + "-" + d.getMonth(), m = months.find(x => x.k === k); if (!m) { m = { k, n: new Intl.DateTimeFormat("es-MX", { month: "long", year: "numeric" }).format(d), c: 0 }; months.push(m) } m.c++ }); $("name").textContent = p.name; $("key").textContent = p.key; $("desc").textContent = p.description; $("status").textContent = p.status; $("start").textContent = fmt(p.startDate); $("end").textContent = fmt(p.endDate); let mh = months.map(m => `<div class="month" style="width:${m.c * W}px">${m.n}</div>`).join(''), dh = ds.map(d => { let wd = d.getDay(), today = new Date(), iso = d.toISOString().slice(0, 10), c = (wd === 0 || wd === 6 ? ' weekend' : '') + (iso === today.toISOString().slice(0, 10) ? ' today' : ''); return `<div class="day${c}">${d.getDate()}<br>${['D', 'L', 'M', 'X', 'J', 'V', 'S'][wd]}</div>` }).join(''); let left = D.tasks.map((t, i) => `<div class="row"><div class="cell num">${i + 1}</div><div class="cell taskname"><span class="indent" style="margin-left:${t.parent ? 16 : 0}px"></span>${t.type === 'epic' ? '<button class="expand">⌄</button>' : ''}<span class="icon ${t.type}">${t.type === 'milestone' ? '◆' : t.type === 'epic' ? 'E' : 'T'}</span><span title="${esc(t.name)}">${esc(t.name)}</span></div><div class="cell status"><span class="dot" style="${t.status === 'Done' ? 'background:#22a06b' : ''}"></span>${esc(t.status)}</div><div class="cell progress">${t.progress}%</div></div>`).join(''); let bars = D.tasks.map(t => { let x = diff(s, dt(t.start)) * W + 3, w = Math.max(18, (diff(dt(t.start), dt(t.end)) + 1) * W - 7), c = t.status === 'Done' ? ' done' : t.type === 'epic' ? ' epic' : t.type === 'milestone' ? ' milestone' : ''; return `<div class="bar-row"><div class="bar${c}" style="left:${x}px;width:${w}px" title="${esc(t.key + ' · ' + t.name + ' · ' + t.start + ' → ' + t.end + ' · ' + t.progress + '%')}">${t.type === 'milestone' ? '' : `<span>${t.progress}%</span>`}<div class="fill" style="width:${t.progress}%"></div></div></div>` }).join(''); let width = ds.length * W; $("app").innerHTML = `<div class="layout"><div class="left"><div class="head table-head"><div>#</div><div>Tarea</div><div>Estado</div><div>Progreso</div></div>${left}</div><div class="right"><div class="head timeline-head" style="width:${width}px"><div class="months">${mh}</div><div class="days">${dh}</div></div><div class="bars" style="width:${width}px">${bars}<div id="today" class="today-line"></div></div></div></div>`; let today = new Date(), o = diff(s, today); if (o >= 0 && o <= ds.length) $("today").style.left = (o * W) + "px" } function zoom(n) { W = Math.max(24, Math.min(65, W + n * 7)); render() } fetch("proyecto.json").then(r => r.json()).then(x => { D = x; render() }).catch(e => $("app").innerHTML = `<div style="padding:30px;color:#ae2a19"><b>No se pudo cargar proyecto.json.</b><br>Usa Live Server o un servidor local. Error: ${e.message}</div>`);</script>
+</body>
+
+</html>

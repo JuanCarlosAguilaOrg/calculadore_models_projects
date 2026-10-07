@@ -1,0 +1,37 @@
+{
+  "project": {
+    "id": "MKT-001",
+    "name": "MVP Agencia de Marketing con IA",
+    "key": "MKT",
+    "description": "Tendencias + análisis del negocio = estrategia de publicaciones + copy + imágenes.",
+    "startDate": "2026-10-05",
+    "endDate": "2026-11-27",
+    "owner": "Juan Carlos",
+    "status": "En progreso"
+  },
+  "tasks": [
+    {"id":"MKT-1","parent":null,"key":"MKT-1","name":"Definición del MVP","type":"epic","status":"Done","priority":"Highest","assignee":"Juan Carlos","start":"2026-10-05","end":"2026-10-07","progress":100,"dependencies":[]},
+    {"id":"MKT-2","parent":"MKT-1","key":"MKT-2","name":"Definir flujo tendencias → estrategia","type":"task","status":"Done","priority":"High","assignee":"Juan Carlos","start":"2026-10-05","end":"2026-10-06","progress":100,"dependencies":[]},
+    {"id":"MKT-3","parent":"MKT-1","key":"MKT-3","name":"Definir arquitectura técnica","type":"task","status":"Done","priority":"High","assignee":"Juan Carlos","start":"2026-10-06","end":"2026-10-07","progress":100,"dependencies":["MKT-2"]},
+    {"id":"MKT-4","parent":null,"key":"MKT-4","name":"Motor de tendencias","type":"epic","status":"In Progress","priority":"Highest","assignee":"Juan Carlos","start":"2026-10-08","end":"2026-10-16","progress":45,"dependencies":["MKT-3"]},
+    {"id":"MKT-5","parent":"MKT-4","key":"MKT-5","name":"Conector RSS / GDELT","type":"task","status":"Done","priority":"High","assignee":"Juan Carlos","start":"2026-10-08","end":"2026-10-10","progress":100,"dependencies":["MKT-3"]},
+    {"id":"MKT-6","parent":"MKT-4","key":"MKT-6","name":"Normalización y scoring de tendencias","type":"task","status":"In Progress","priority":"High","assignee":"Juan Carlos","start":"2026-10-11","end":"2026-10-15","progress":55,"dependencies":["MKT-5"]},
+    {"id":"MKT-7","parent":"MKT-4","key":"MKT-7","name":"API FastAPI de tendencias","type":"task","status":"To Do","priority":"Medium","assignee":"Juan Carlos","start":"2026-10-14","end":"2026-10-16","progress":0,"dependencies":["MKT-6"]},
+    {"id":"MKT-8","parent":null,"key":"MKT-8","name":"Estrategia de publicaciones con IA","type":"epic","status":"To Do","priority":"Highest","assignee":"Juan Carlos","start":"2026-10-17","end":"2026-10-27","progress":15,"dependencies":["MKT-7"]},
+    {"id":"MKT-9","parent":"MKT-8","key":"MKT-9","name":"Perfil estructurado del negocio","type":"task","status":"Done","priority":"High","assignee":"Juan Carlos","start":"2026-10-17","end":"2026-10-19","progress":100,"dependencies":["MKT-7"]},
+    {"id":"MKT-10","parent":"MKT-8","key":"MKT-10","name":"Prompt / agente de estrategia","type":"task","status":"To Do","priority":"Highest","assignee":"Juan Carlos","start":"2026-10-20","end":"2026-10-24","progress":0,"dependencies":["MKT-9"]},
+    {"id":"MKT-11","parent":"MKT-8","key":"MKT-11","name":"Aprendizaje a partir del rendimiento","type":"task","status":"To Do","priority":"Medium","assignee":"Juan Carlos","start":"2026-10-24","end":"2026-10-27","progress":0,"dependencies":["MKT-10"]},
+    {"id":"MKT-12","parent":null,"key":"MKT-12","name":"Generación de contenido","type":"epic","status":"To Do","priority":"High","assignee":"Juan Carlos","start":"2026-10-28","end":"2026-11-06","progress":0,"dependencies":["MKT-11"]},
+    {"id":"MKT-13","parent":"MKT-12","key":"MKT-13","name":"Generación de copy","type":"task","status":"To Do","priority":"High","assignee":"Juan Carlos","start":"2026-10-28","end":"2026-10-31","progress":0,"dependencies":["MKT-11"]},
+    {"id":"MKT-14","parent":"MKT-12","key":"MKT-14","name":"Generación de imágenes","type":"task","status":"To Do","priority":"High","assignee":"Juan Carlos","start":"2026-11-01","end":"2026-11-04","progress":0,"dependencies":["MKT-13"]},
+    {"id":"MKT-15","parent":"MKT-12","key":"MKT-15","name":"Vista previa y edición","type":"task","status":"To Do","priority":"Medium","assignee":"Juan Carlos","start":"2026-11-04","end":"2026-11-06","progress":0,"dependencies":["MKT-14"]},
+    {"id":"MKT-16","parent":null,"key":"MKT-16","name":"MVP y pruebas","type":"epic","status":"To Do","priority":"Highest","assignee":"Juan Carlos","start":"2026-11-07","end":"2026-11-20","progress":0,"dependencies":["MKT-15"]},
+    {"id":"MKT-17","parent":"MKT-16","key":"MKT-17","name":"Dashboard MVP","type":"task","status":"To Do","priority":"High","assignee":"Juan Carlos","start":"2026-11-07","end":"2026-11-12","progress":0,"dependencies":["MKT-15"]},
+    {"id":"MKT-18","parent":"MKT-16","key":"MKT-18","name":"Integración Supabase / Render","type":"task","status":"To Do","priority":"High","assignee":"Juan Carlos","start":"2026-11-13","end":"2026-11-16","progress":0,"dependencies":["MKT-17"]},
+    {"id":"MKT-19","parent":"MKT-16","key":"MKT-19","name":"Pruebas con negocio piloto","type":"task","status":"To Do","priority":"Highest","assignee":"Juan Carlos","start":"2026-11-17","end":"2026-11-20","progress":0,"dependencies":["MKT-18"]},
+    {"id":"MKT-20","parent":null,"key":"MKT-20","name":"Demo comercial","type":"epic","status":"To Do","priority":"High","assignee":"Juan Carlos","start":"2026-11-21","end":"2026-11-27","progress":0,"dependencies":["MKT-19"]},
+    {"id":"MKT-21","parent":"MKT-20","key":"MKT-21","name":"Preparar demo","type":"task","status":"To Do","priority":"High","assignee":"Juan Carlos","start":"2026-11-21","end":"2026-11-24","progress":0,"dependencies":["MKT-19"]},
+    {"id":"MKT-22","parent":"MKT-20","key":"MKT-22","name":"Documentación y propuesta comercial","type":"task","status":"To Do","priority":"Medium","assignee":"Juan Carlos","start":"2026-11-24","end":"2026-11-26","progress":0,"dependencies":["MKT-21"]},
+    {"id":"MKT-23","parent":"MKT-20","key":"MKT-23","name":"Presentación al cliente","type":"milestone","status":"To Do","priority":"Highest","assignee":"Juan Carlos","start":"2026-11-27","end":"2026-11-27","progress":0,"dependencies":["MKT-22"]}
+  ]
+}
