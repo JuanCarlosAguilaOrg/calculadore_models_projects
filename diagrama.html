@@ -336,7 +336,7 @@
     </header>
     <!-- Header Flotante -->
     <div
-        class="fixed top-6 left-6 z-50 bg-white/90 backdrop-blur-md border border-slate-200 px-5 py-3 rounded-2xl shadow-lg flex items-center gap-4">
+        class="diagram-toolbar">
         <div>
             <h1 class="font-bold text-slate-800 text-base flex items-center gap-2">
                 <i class="fa-solid fa-sitemap text-blue-600"></i> Diagrama de Flujo Interactivo
@@ -867,188 +867,365 @@
     </div>
 
     <script>
-        // Configuración de Estado Global del Canvas
-        let scale = 0.55;
-        let pointX = 50;
-        let pointY = 20;
-        let startX = 0;
-        let startY = 0;
-        let isPanning = false;
+       
+"use strict";
 
-        const viewport = document.getElementById('viewport');
-        const canvas = document.getElementById('canvas');
-        const svg = document.getElementById('svg-connections');
+const Diagram = (() => {
+    const CONFIG = {
+        initialScale: 0.55,
+        minScale: 0.15,
+        maxScale: 2.5,
+        zoomFactor: 1.1,
+        buttonZoomFactor: 1.2,
+        initialX: 50,
+        initialY: 20,
+        nodeSelector: ".node"
+    };
 
-        // Aplicar Transformación al Canvas
-        function updateTransform() {
-            canvas.style.transform = `translate(${pointX}px, ${pointY}px) scale(${scale})`;
-        }
+    const CONNECTIONS = [
+        // Registro y configuración inicial
+        { from: "node-1", to: "node-2" },
+        { from: "node-2", to: "node-3" },
+        { from: "node-3", to: "node-4" },
+        { from: "node-4", to: "node-5" },
+        { from: "node-5", to: "node-6" },
+        { from: "node-6", to: "node-7" },
+        { from: "node-7", to: "node-8" },
+        { from: "node-8", to: "node-9" },
+        { from: "node-9", to: "node-10" },
 
-        // Eventos Pan (Arrastre de Lienzo)
-        viewport.addEventListener('mousedown', (e) => {
-            if (e.target.closest('.node')) return; // No arrastrar si interactúa con un nodo
-            isPanning = true;
-            startX = e.clientX - pointX;
-            startY = e.clientY - pointY;
-        });
+        // Variaciones hacia la estrategia
+        { from: "node-9", to: "node-11", curveOffset: -100 },
+        { from: "node-8", to: "node-11", curveOffset: -120 },
+        { from: "node-7", to: "node-11", curveOffset: -140 },
+        { from: "node-6", to: "node-11", curveOffset: -160 },
+        { from: "node-5", to: "node-11", curveOffset: -180 },
+        { from: "node-4", to: "node-11", curveOffset: -200 },
 
-        window.addEventListener('mousemove', (e) => {
-            if (!isPanning) return;
-            pointX = e.clientX - startX;
-            pointY = e.clientY - startY;
-            updateTransform();
-        });
+        // Dashboard
+        { from: "node-17", to: "node-18" },
+        { from: "node-18", to: "node-19" },
+        { from: "node-19", to: "node-20", curveOffset: 50 },
+        { from: "node-20", to: "node-16", curveOffset: 30 },
 
-        window.addEventListener('mouseup', () => {
-            isPanning = false;
-        });
+        // Estrategia y generación de contenido
+        { from: "node-10", to: "node-12", curveOffset: 80 },
+        { from: "node-12", to: "node-13" },
+        { from: "node-13", to: "node-14" },
+        { from: "node-12", to: "node-15", curveOffset: 60 },
+        { from: "node-12", to: "node-16", curveOffset: 40 },
+        { from: "node-16", to: "node-15" }
+    ];
 
-        // Evento Zoom con Rueda
-        viewport.addEventListener('wheel', (e) => {
-            e.preventDefault();
-            const xs = (e.clientX - pointX) / scale;
-            const ys = (e.clientY - pointY) / scale;
-            const delta = -e.deltaY;
+    const state = {
+        scale: CONFIG.initialScale,
+        x: CONFIG.initialX,
+        y: CONFIG.initialY,
+        isPanning: false,
+        pointerId: null,
+        lastPointerX: 0,
+        lastPointerY: 0
+    };
 
-            (delta > 0) ? (scale *= 1.1) : (scale /= 1.1);
-            scale = Math.min(Math.max(0.15, scale), 2.5); // Límites de Zoom
+    let viewport;
+    let canvas;
+    let svg;
 
-            pointX = e.clientX - xs * scale;
-            pointY = e.clientY - ys * scale;
+    function getElement(id) {
+        return document.getElementById(id);
+    }
 
-            updateTransform();
-        }, { passive: false });
+    function clamp(value, min, max) {
+        return Math.min(Math.max(value, min), max);
+    }
 
-        // Controles de Botones
-        function zoomIn() {
-            scale = Math.min(scale * 1.2, 2.5);
-            updateTransform();
-        }
+    function getPointerPosition(event) {
+        const rect = viewport.getBoundingClientRect();
 
-        function zoomOut() {
-            scale = Math.max(scale / 1.2, 0.15);
-            updateTransform();
-        }
-
-        function resetZoom() {
-            scale = 0.55;
-            pointX = 50;
-            pointY = 20;
-            updateTransform();
-        }
-
-        // Definición de las Conexiones/Flechas según la Imagen
-        const connections = [
-            // Cadena de Wizard Superior
-            { from: 'node-1', to: 'node-2' },
-            { from: 'node-2', to: 'node-3' },
-            { from: 'node-3', to: 'node-4' },
-            { from: 'node-4', to: 'node-5' },
-            { from: 'node-5', to: 'node-6' },
-            { from: 'node-6', to: 'node-7' },
-            { from: 'node-7', to: 'node-8' },
-            { from: 'node-8', to: 'node-9' },
-            { from: 'node-9', to: 'node-10' },
-
-            // Conexiones de Selección del Wizard 5 (de opciones a nodo 11)
-            { from: 'node-9', to: 'node-11', curveOffset: -100 },
-            { from: 'node-8', to: 'node-11', curveOffset: -120 },
-            { from: 'node-7', to: 'node-11', curveOffset: -140 },
-            { from: 'node-6', to: 'node-11', curveOffset: -160 },
-            { from: 'node-5', to: 'node-11', curveOffset: -180 },
-            { from: 'node-4', to: 'node-11', curveOffset: -200 },
-
-            // Conexiones del Flujo Inferior / Dashboard
-            { from: 'node-17', to: 'node-18' },
-            { from: 'node-18', to: 'node-19' },
-            { from: 'node-19', to: 'node-20', curveOffset: 50 },
-            { from: 'node-20', to: 'node-16', curveOffset: 30 },
-
-            // Conexiones hacia Estrategia Principal
-            { from: 'node-10', to: 'node-12', curveOffset: 80 },
-            { from: 'node-12', to: 'node-13' },
-            { from: 'node-13', to: 'node-14' },
-
-            // Conexión de Estrategia a Copy
-            { from: 'node-12', to: 'node-15', curveOffset: 60 },
-
-            // Conexiones del Modal / Variaciones
-            { from: 'node-12', to: 'node-16', curveOffset: 40 },
-            { from: 'node-16', to: 'node-15' }
-        ];
-
-        // Función para Dibujar Flechas SVG Curvas
-        function drawConnections() {
-            // Limpiar paths existentes manteniendo la definición de marcas
-            const existingPaths = svg.querySelectorAll('path');
-            existingPaths.forEach(p => p.remove());
-
-            connections.forEach(conn => {
-                const fromEl = document.getElementById(conn.from);
-                const toEl = document.getElementById(conn.to);
-
-                if (!fromEl || !toEl) return;
-
-                const fromRect = {
-                    x: fromEl.offsetLeft,
-                    y: fromEl.offsetTop,
-                    w: fromEl.offsetWidth,
-                    h: fromEl.offsetHeight
-                };
-
-                const toRect = {
-                    x: toEl.offsetLeft,
-                    y: toEl.offsetTop,
-                    w: toEl.offsetWidth,
-                    h: toEl.offsetHeight
-                };
-
-                // Puntos de Origen y Destino Calculados
-                let startX = fromRect.x + fromRect.w;
-                let startY = fromRect.y + fromRect.h / 2;
-                let endX = toRect.x;
-                let endY = toRect.y + toRect.h / 2;
-
-                // Ajustes de salida/entrada según ubicación relativa
-                if (fromRect.x > toRect.x) {
-                    startX = fromRect.x;
-                    endX = toRect.x + toRect.w;
-                }
-
-                const dx = endX - startX;
-                const dy = endY - startY;
-
-                // Curva Bézier
-                const curveOffset = conn.curveOffset || 0;
-                const controlX1 = startX + dx * 0.5;
-                const controlY1 = startY + curveOffset;
-                const controlX2 = startX + dx * 0.5;
-                const controlY2 = endY + curveOffset;
-
-                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-                const d = `M ${startX} ${startY} C ${controlX1} ${controlY1}, ${controlX2} ${controlY2}, ${endX} ${endY}`;
-
-                path.setAttribute('d', d);
-                path.setAttribute('stroke', '#1e293b');
-                path.setAttribute('stroke-width', '2');
-                path.setAttribute('fill', 'none');
-                path.setAttribute('marker-end', 'url(#arrow)');
-                path.setAttribute('stroke-linecap', 'round');
-
-                svg.appendChild(path);
-            });
-        }
-
-        // Inicialización
-        window.onload = () => {
-            updateTransform();
-            drawConnections();
+        return {
+            x: event.clientX - rect.left,
+            y: event.clientY - rect.top
         };
+    }
 
-        // Redibujar en caso de redimensionamiento
-        window.onresize = () => {
-            drawConnections();
+    function applyTransform() {
+        canvas.style.transform =
+            `translate(${state.x}px, ${state.y}px) scale(${state.scale})`;
+    }
+
+    function setZoom(nextScale, anchorX, anchorY) {
+        const scale = clamp(
+            nextScale,
+            CONFIG.minScale,
+            CONFIG.maxScale
+        );
+
+        // Conserva el punto bajo el cursor mientras cambia el zoom.
+        const worldX = (anchorX - state.x) / state.scale;
+        const worldY = (anchorY - state.y) / state.scale;
+
+        state.scale = scale;
+        state.x = anchorX - worldX * scale;
+        state.y = anchorY - worldY * scale;
+
+        applyTransform();
+    }
+
+    function zoomIn() {
+        const centerX = viewport.clientWidth / 2;
+        const centerY = viewport.clientHeight / 2;
+
+        setZoom(
+            state.scale * CONFIG.buttonZoomFactor,
+            centerX,
+            centerY
+        );
+    }
+
+    function zoomOut() {
+        const centerX = viewport.clientWidth / 2;
+        const centerY = viewport.clientHeight / 2;
+
+        setZoom(
+            state.scale / CONFIG.buttonZoomFactor,
+            centerX,
+            centerY
+        );
+    }
+
+    function resetZoom() {
+        state.scale = CONFIG.initialScale;
+        state.x = CONFIG.initialX;
+        state.y = CONFIG.initialY;
+
+        applyTransform();
+    }
+
+    function getNodeBounds(element) {
+        return {
+            x: element.offsetLeft,
+            y: element.offsetTop,
+            width: element.offsetWidth,
+            height: element.offsetHeight
         };
+    }
+
+    function getConnectionPoints(from, to) {
+        const source = getNodeBounds(from);
+        const target = getNodeBounds(to);
+
+        const sourceIsLeft = source.x <= target.x;
+
+        const startX = sourceIsLeft
+            ? source.x + source.width
+            : source.x;
+
+        const endX = sourceIsLeft
+            ? target.x
+            : target.x + target.width;
+
+        return {
+            startX,
+            startY: source.y + source.height / 2,
+            endX,
+            endY: target.y + target.height / 2
+        };
+    }
+
+    function createPath(connection) {
+        const from = getElement(connection.from);
+        const to = getElement(connection.to);
+
+        if (!from || !to) {
+            return null;
+        }
+
+        const {
+            startX,
+            startY,
+            endX,
+            endY
+        } = getConnectionPoints(from, to);
+
+        const offset = connection.curveOffset ?? 0;
+        const controlX = startX + (endX - startX) / 2;
+        const controlY1 = startY + offset;
+        const controlY2 = endY + offset;
+
+        const path = document.createElementNS(
+            "http://www.w3.org/2000/svg",
+            "path"
+        );
+
+        path.setAttribute(
+            "d",
+            [
+                `M ${startX} ${startY}`,
+                `C ${controlX} ${controlY1},`,
+                `${controlX} ${controlY2},`,
+                `${endX} ${endY}`
+            ].join(" ")
+        );
+
+        path.setAttribute("class", "connection-path");
+        path.setAttribute("marker-end", "url(#arrow)");
+
+        return path;
+    }
+
+    function drawConnections() {
+        // Elimina solo las conexiones, no el marcador SVG.
+        svg.querySelectorAll(".connection-path").forEach(path => {
+            path.remove();
+        });
+
+        const fragment = document.createDocumentFragment();
+
+        CONNECTIONS.forEach(connection => {
+            const path = createPath(connection);
+
+            if (path) {
+                fragment.appendChild(path);
+            }
+        });
+
+        svg.appendChild(fragment);
+    }
+
+    function isInteractiveTarget(target) {
+        return Boolean(
+            target.closest(
+                "button, input, select, textarea, a, label, " +
+                "[contenteditable='true']"
+            )
+        );
+    }
+
+    function onPointerDown(event) {
+        // Solo iniciar el arrastre con el botón principal del ratón.
+        if (event.pointerType === "mouse" && event.button !== 0) {
+            return;
+        }
+
+        if (event.target.closest(CONFIG.nodeSelector)) {
+            return;
+        }
+
+        if (isInteractiveTarget(event.target)) {
+            return;
+        }
+
+        state.isPanning = true;
+        state.pointerId = event.pointerId;
+        state.lastPointerX = event.clientX;
+        state.lastPointerY = event.clientY;
+
+        viewport.classList.add("is-panning");
+        viewport.setPointerCapture(event.pointerId);
+    }
+
+    function onPointerMove(event) {
+        if (!state.isPanning || event.pointerId !== state.pointerId) {
+            return;
+        }
+
+        const deltaX = event.clientX - state.lastPointerX;
+        const deltaY = event.clientY - state.lastPointerY;
+
+        state.x += deltaX;
+        state.y += deltaY;
+
+        state.lastPointerX = event.clientX;
+        state.lastPointerY = event.clientY;
+
+        applyTransform();
+    }
+
+    function stopPanning(event) {
+        if (
+            state.pointerId !== null &&
+            event &&
+            event.pointerId !== state.pointerId
+        ) {
+            return;
+        }
+
+        state.isPanning = false;
+        state.pointerId = null;
+        viewport.classList.remove("is-panning");
+    }
+
+    function onWheel(event) {
+        event.preventDefault();
+
+        const pointer = getPointerPosition(event);
+        const factor = event.deltaY < 0
+            ? CONFIG.zoomFactor
+            : 1 / CONFIG.zoomFactor;
+
+        setZoom(
+            state.scale * factor,
+            pointer.x,
+            pointer.y
+        );
+    }
+
+    function bindEvents() {
+        viewport.addEventListener("pointerdown", onPointerDown);
+        viewport.addEventListener("pointermove", onPointerMove);
+        viewport.addEventListener("pointerup", stopPanning);
+        viewport.addEventListener("pointercancel", stopPanning);
+        viewport.addEventListener("lostpointercapture", stopPanning);
+
+        viewport.addEventListener("wheel", onWheel, {
+            passive: false
+        });
+
+        // API pública para los botones existentes en el HTML.
+        window.zoomIn = zoomIn;
+        window.zoomOut = zoomOut;
+        window.resetZoom = resetZoom;
+
+        window.addEventListener("resize", drawConnections);
+    }
+
+    function init() {
+        viewport = getElement("viewport");
+        canvas = getElement("canvas");
+        svg = getElement("svg-connections");
+
+        if (!viewport || !canvas || !svg) {
+            console.error(
+                "No se pudo inicializar el diagrama: " +
+                "falta #viewport, #canvas o #svg-connections."
+            );
+            return;
+        }
+
+        applyTransform();
+        bindEvents();
+
+        // Espera a que el navegador calcule los tamaños iniciales.
+        requestAnimationFrame(drawConnections);
+    }
+
+    return {
+        init,
+        zoomIn,
+        zoomOut,
+        resetZoom,
+        drawConnections
+    };
+})();
+
+if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", Diagram.init, {
+        once: true
+    });
+} else {
+    Diagram.init();
+}
+
     </script>
 </body>
 
