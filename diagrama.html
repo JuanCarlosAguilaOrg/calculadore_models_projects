@@ -1,0 +1,1055 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Calculadora de costos IA - MVP Marketing</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --bg: #f3f4f6;
+            --surface: #ffffff;
+            --text: #17202a;
+            --muted: #64748b;
+            --line: #d9dee5;
+            --accent: #2563eb;
+            --accent-hover: #1d4ed8;
+            --node-border: #1e293b;
+            --success: #15803d;
+            --canvas-grid: #d1d5db;
+            --radius-card: 20px;
+            --shadow-card: 0 10px 25px -5px rgb(0 0 0 / 8%),
+                0 8px 10px -6px rgb(0 0 0 / 5%);
+        }
+
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+        }
+
+        body {
+            font-family: Inter, "Segoe UI", Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            overflow: hidden;
+        }
+
+        button,
+        input,
+        select,
+        textarea {
+            font: inherit;
+        }
+
+        button {
+            cursor: pointer;
+        }
+
+        button:focus-visible,
+        a:focus-visible,
+        input:focus-visible {
+            outline: 3px solid #93c5fd;
+            outline-offset: 2px;
+        }
+
+        /* Navegación */
+
+        .topnav {
+            position: relative;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            height: 56px;
+            padding: 0 5vw;
+            background: #172b4d;
+            color: white;
+            box-shadow: 0 2px 8px rgb(0 0 0 / 12%);
+        }
+
+        .brand {
+            margin-right: 18px;
+            font-weight: 800;
+        }
+
+        .navlink {
+            padding: 9px 13px;
+            border-radius: 7px;
+            color: #dfe7f3;
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .navlink:hover {
+            background: rgb(255 255 255 / 8%);
+        }
+
+        .navlink.active {
+            background: #0c66e4;
+            color: white;
+        }
+
+        /* Área de navegación del diagrama */
+
+        #viewport {
+            position: relative;
+            width: 100%;
+            height: calc(100dvh - 56px);
+            overflow: hidden;
+            cursor: grab;
+            touch-action: none;
+            background: #f3f4f6;
+        }
+
+        #viewport.is-panning {
+            cursor: grabbing;
+        }
+
+        #canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 5000px;
+            height: 3500px;
+            transform-origin: 0 0;
+            background-image:
+                radial-gradient(var(--canvas-grid) 1px, transparent 1px);
+            background-size: 24px 24px;
+            will-change: transform;
+        }
+
+        /* Conexiones SVG */
+
+        #svg-connections {
+            position: absolute;
+            inset: 0;
+            z-index: 10;
+            width: 100%;
+            height: 100%;
+            overflow: visible;
+            pointer-events: none;
+        }
+
+        .connection-path {
+            fill: none;
+            stroke: var(--node-border);
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            vector-effect: non-scaling-stroke;
+        }
+
+        /* Nodos */
+
+        .node {
+            position: absolute;
+            z-index: 20;
+            border: 2px solid var(--node-border);
+            border-radius: var(--radius-card);
+            background: var(--surface);
+            box-shadow: var(--shadow-card);
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .node:hover {
+            border-color: #3b82f6;
+            box-shadow: 0 14px 28px rgb(59 130 246 / 15%);
+        }
+
+        .node.selected {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px #93c5fd;
+        }
+
+        /* Elementos wireframe */
+
+        .btn-wf {
+            display: inline-block;
+            padding: 4px 12px;
+            border: 1.5px solid var(--node-border);
+            border-radius: 8px;
+            background: white;
+            color: var(--text);
+            text-align: center;
+            font-size: 11px;
+            font-weight: 600;
+            transition: background-color 0.15s, transform 0.15s;
+        }
+
+        .btn-wf:hover {
+            background: #f1f5f9;
+            transform: translateY(-1px);
+        }
+
+        .btn-wf-primary {
+            background: #0f172a;
+            color: white;
+        }
+
+        .btn-wf-primary:hover {
+            background: #334155;
+        }
+
+        .input-wf {
+            width: 100%;
+            padding: 4px 8px;
+            border: 1.5px solid #94a3b8;
+            border-radius: 8px;
+            background: white;
+            font-size: 11px;
+        }
+
+        /* Notas */
+
+        .sticky-note {
+            padding: 20px;
+            border: 1px solid #fde047;
+            border-radius: 2px;
+            background: #fef08a;
+            color: #713f12;
+            font-family: "Caveat", cursive;
+            font-size: 18px;
+            line-height: 1.2;
+            box-shadow: 4px 6px 12px rgb(0 0 0 / 8%);
+        }
+
+        /* Modal de ejemplo */
+
+        .modal-overlay {
+            background: rgb(15 23 42 / 40%);
+            backdrop-filter: blur(2px);
+        }
+
+        /* Panel flotante */
+
+        .diagram-toolbar {
+            position: fixed;
+            top: 72px;
+            left: 24px;
+            z-index: 50;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            max-width: calc(100vw - 48px);
+            padding: 12px 20px;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            background: rgb(255 255 255 / 92%);
+            box-shadow: 0 10px 20px rgb(0 0 0 / 8%);
+            backdrop-filter: blur(8px);
+        }
+
+        .controls-bar {
+            position: fixed;
+            right: 24px;
+            bottom: 24px;
+            z-index: 100;
+            display: flex;
+            gap: 6px;
+            padding: 6px;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            background: rgb(255 255 255 / 92%);
+            box-shadow: 0 10px 15px rgb(0 0 0 / 10%);
+            backdrop-filter: blur(8px);
+        }
+
+        .control-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            background: transparent;
+            color: #475569;
+            transition: background-color 0.2s, color 0.2s;
+        }
+
+        .control-btn:hover {
+            background: #f1f5f9;
+            color: #0f172a;
+        }
+
+        @media (max-width: 640px) {
+            .topnav {
+                gap: 4px;
+                padding-inline: 12px;
+            }
+
+            .brand {
+                margin-right: 4px;
+                font-size: 12px;
+            }
+
+            .navlink {
+                padding: 8px;
+                font-size: 12px;
+            }
+
+            .diagram-toolbar {
+                top: 64px;
+                left: 12px;
+                gap: 8px;
+                padding: 10px;
+            }
+
+            .controls-bar {
+                right: 12px;
+                bottom: 12px;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+
+            *,
+            *::before,
+            *::after {
+                scroll-behavior: auto !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="topnav">
+        <div class="brand">Vulpex · MVP</div>
+        <a class="navlink" href="index.html">⌂ Home</a>
+        <a class="navlink" href="proyecto.html">▦ Proyecto</a>
+        <a class="navlink active" href="diagrama.html">▦ Diagrama</a>
+    </nav>
+    <header>
+        <h1>Calculadora de costos IA - MVP de marketing</h1>
+        <p>20 imágenes + estrategia mensual + tendencias + copy + infraestructura + margen.</p>
+    </header>
+    <!-- Header Flotante -->
+    <div
+        class="fixed top-6 left-6 z-50 bg-white/90 backdrop-blur-md border border-slate-200 px-5 py-3 rounded-2xl shadow-lg flex items-center gap-4">
+        <div>
+            <h1 class="font-bold text-slate-800 text-base flex items-center gap-2">
+                <i class="fa-solid fa-sitemap text-blue-600"></i> Diagrama de Flujo Interactivo
+            </h1>
+            <p class="text-xs text-slate-500">Haz clic y arrastra para navegar • Rueda del ratón para Zoom</p>
+        </div>
+        <div class="h-6 w-px bg-slate-200"></div>
+        <button onclick="resetZoom()"
+            class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-3 py-1.5 rounded-lg transition">
+            Centrar Vista
+        </button>
+    </div>
+
+    <!-- Viewport Canvas Principal -->
+    <div id="viewport">
+        <div id="canvas">
+            <!-- SVG para Renderizado de Flechas / Conexiones -->
+            <svg id="svg-connections">
+                <defs>
+                    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6"
+                        orient="auto-start-reverse">
+                        <path d="M 0 0 L 10 5 L 0 10 z" fill="#1e293b" />
+                    </marker>
+                </defs>
+            </svg>
+
+            <!-- NODOS / PANTALLAS DEL DIAGRAMA -->
+
+            <!-- 1. Bienvenido La Plataforma (Arriba Izquierda) -->
+            <div id="node-1" class="node w-[170px] p-4 text-center" style="left: 80px; top: 240px;">
+                <h3 class="font-bold text-xs mb-3 text-slate-800">Bienvenido<br><span
+                        class="text-blue-600">la.plataforma</span></h3>
+                <div class="space-y-2 text-left mb-4">
+                    <div>
+                        <label class="text-[9px] font-medium text-slate-500">Usuario</label>
+                        <div class="input-wf h-5"></div>
+                    </div>
+                    <div>
+                        <label class="text-[9px] font-medium text-slate-500">Password</label>
+                        <div class="input-wf h-5"></div>
+                    </div>
+                </div>
+                <div class="text-[8px] text-slate-400 mb-3">No tienes cuenta</div>
+            </div>
+
+            <!-- 2. Registro Datos (Paso 1) -->
+            <div id="node-2" class="node w-[170px] p-4" style="left: 280px; top: 240px;">
+                <div class="text-[10px] text-slate-400 mb-1">Registro</div>
+                <h4 class="font-bold text-xs mb-3 text-slate-800">Tus datos</h4>
+                <div class="space-y-2 mb-4">
+                    <div>
+                        <label class="text-[9px] text-slate-600">¿Cuál es tu nombre?</label>
+                        <div class="input-wf h-5"></div>
+                    </div>
+                    <div>
+                        <label class="text-[9px] text-slate-600">¿Cuales son tus apellidos?</label>
+                        <div class="input-wf h-5"></div>
+                    </div>
+                </div>
+                <div class="text-xs font-semibold text-slate-700 mb-2">Nueva cuenta</div>
+                <div class="space-y-2 mb-4">
+                    <div>
+                        <label class="text-[9px] text-slate-500">correo</label>
+                        <div class="input-wf h-5"></div>
+                    </div>
+                    <div>
+                        <label class="text-[9px] text-slate-500">password</label>
+                        <div class="input-wf h-5"></div>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <button class="btn-wf text-[9px]">Siguiente</button>
+                </div>
+            </div>
+
+            <!-- 3. Registro Completado -->
+            <div id="node-3" class="node w-[170px] p-4 opacity-50" style="left: 480px; top: 240px;">
+                <div class="text-[10px] text-slate-400 mb-1">Registro</div>
+                <div class="text-[10px] text-slate-400 mb-4">Tus datos</div>
+                <div class="border border-dashed border-slate-300 rounded-xl p-3 text-center my-6">
+                    <div class="font-bold text-xs text-slate-700 mb-2">Registro completado</div>
+                    <button class="btn-wf text-[9px]">Siguiente</button>
+                </div>
+            </div>
+
+            <!-- 4. ¡Hola! Vamos a crear una estrategia -->
+            <div id="node-4" class="node w-[170px] p-4 text-center" style="left: 680px; top: 240px;">
+                <div class="text-lg mb-1">👋 ¡Hola!</div>
+                <p class="text-[10px] text-slate-600 leading-tight mb-4">
+                    Vamos a crear una estrategia para hacer crecer tu negocio.<br><br>
+                    Primero necesito conocer un poco sobre lo que vendes.
+                </p>
+                <button class="btn-wf text-[9px] mt-4">Siguiente</button>
+            </div>
+
+            <!-- 5. Wizard 1 de 5: ¿Qué vendes? -->
+            <div id="node-5" class="node w-[170px] p-4" style="left: 880px; top: 240px;">
+                <div class="text-[10px] font-bold text-slate-500 mb-2">1 de 5</div>
+                <div class="text-[10px] font-semibold text-slate-800 mb-1">¿Qué vendes?</div>
+                <div class="text-[8px] text-slate-500 leading-tight mb-3">Cuéntanos qué producto o servicio quieres
+                    promocionar.</div>
+                <div class="input-wf h-12 mb-6"></div>
+                <div class="text-right">
+                    <button class="btn-wf text-[9px]">Siguiente</button>
+                </div>
+            </div>
+
+            <!-- 6. Wizard 2 de 5: ¿A quién le vendes? -->
+            <div id="node-6" class="node w-[180px] p-4" style="left: 1090px; top: 240px;">
+                <div class="text-[10px] font-bold text-slate-500 mb-2">2 de 5</div>
+                <div class="text-[10px] font-semibold text-slate-800 mb-1">¿A quién le vendes?</div>
+                <div class="text-[8px] text-slate-500 leading-tight mb-2">¿Quién suele comprar tu producto o contratar
+                    tu servicio? selecciona uno</div>
+                <div class="space-y-1 text-[9px] text-slate-700 mb-3 pl-1">
+                    <div class="flex items-center gap-1.5"><input type="radio" name="w2"> Personas</div>
+                    <div class="flex items-center gap-1.5"><input type="radio" name="w2"> Empresas</div>
+                    <div class="flex items-center gap-1.5"><input type="radio" name="w2"> Ambos</div>
+                </div>
+                <div class="text-[8px] text-slate-500 mb-1">Edad aproximada selecciona uno</div>
+                <div class="text-[8px] text-slate-600 mb-4 font-mono">[ 18-24 ] [ 25-34 ] [ 35-44 ]<br>[ 45-54 ] [ 55+ ]
+                </div>
+                <div class="flex justify-between">
+                    <button class="btn-wf text-[9px]">Anterior</button>
+                    <button class="btn-wf text-[9px]">Siguiente</button>
+                </div>
+            </div>
+
+            <!-- 7. Wizard 3 de 5: ¿Cuánto cuesta? -->
+            <div id="node-7" class="node w-[180px] p-4" style="left: 1300px; top: 240px;">
+                <div class="text-[10px] font-bold text-slate-500 mb-2">3 de 5</div>
+                <div class="text-[10px] font-semibold text-slate-800 mb-1">¿Cuánto cuesta?</div>
+                <div class="text-[8px] text-slate-500 mb-2">Precio aproximado</div>
+                <div class="space-y-1 text-[8px] text-slate-700 mb-3 pl-1">
+                    <div class="flex items-center gap-1.5"><input type="radio" name="w3"> Precio fijo</div>
+                    <div class="flex items-center gap-1.5"><input type="radio" name="w3"> Desde $</div>
+                    <div class="flex items-center gap-1.5"><input type="radio" name="w3"> Depende del servicio</div>
+                    <div class="flex items-center gap-1.5"><input type="radio" name="w3"> Tengo diferentes productos
+                    </div>
+                </div>
+                <div class="text-[9px] font-semibold text-slate-800 mb-4">$ [ 500 ] MXN</div>
+                <div class="flex justify-between">
+                    <button class="btn-wf text-[9px]">Anterior</button>
+                    <button class="btn-wf text-[9px]">Siguiente</button>
+                </div>
+            </div>
+
+            <!-- 8. Wizard 4 de 5: ¿Dónde vendes? -->
+            <div id="node-8" class="node w-[180px] p-4" style="left: 1510px; top: 240px;">
+                <div class="text-[10px] font-bold text-slate-500 mb-2">4 de 5</div>
+                <div class="text-[10px] font-semibold text-slate-800 mb-1">¿Dónde vendes?</div>
+                <div class="text-[8px] text-slate-500 mb-1">Ciudad</div>
+                <div class="input-wf h-5 mb-3"></div>
+                <div class="text-[8px] text-slate-500 mb-1">¿Hasta dónde puedes atender?</div>
+                <div class="space-y-1 text-[8px] text-slate-700 mb-4 pl-1">
+                    <div class="flex items-center gap-1.5"><input type="radio" name="w4"> Solo mi ciudad</div>
+                    <div class="flex items-center gap-1.5"><input type="radio" name="w4"> Ciudades cercanas</div>
+                    <div class="flex items-center gap-1.5"><input type="radio" name="w4"> Todo el estado</div>
+                    <div class="flex items-center gap-1.5"><input type="radio" name="w4"> Todo México</div>
+                </div>
+                <div class="flex justify-between">
+                    <button class="btn-wf text-[9px]">Anterior</button>
+                    <button class="btn-wf text-[9px]">Siguiente</button>
+                </div>
+            </div>
+
+            <!-- 9. Wizard 5 de 5: ¿Qué quieres lograr? -->
+            <div id="node-9" class="node w-[190px] p-4" style="left: 1720px; top: 240px;">
+                <div class="text-[10px] font-bold text-slate-500 mb-2">5 de 5</div>
+                <div class="text-[10px] font-semibold text-slate-800 mb-1">¿Qué quieres lograr?</div>
+                <div class="text-[8px] text-slate-500 mb-2">Elige tu objetivo principal.</div>
+                <div class="space-y-1.5 text-[8px] text-slate-700 mb-5">
+                    <div class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                        QUIERO VENDER</div>
+                    <div class="flex items-center gap-1.5 font-bold"><span
+                            class="w-2 h-2 rounded-full bg-blue-500"></span> QUIERO CONSEGUIR CLIENTES</div>
+                    <div class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                        QUIERO DARME A CONOCER</div>
+                    <div class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-purple-500"></span>
+                        QUIERO QUE CONFIÉN EN MÍ</div>
+                    <div class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-red-500"></span> QUIERO
+                        RECUPERAR CLIENTES</div>
+                    <div class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-yellow-400"></span>
+                        QUIERO LANZAR UNA PROMOCIÓN</div>
+                </div>
+                <div class="flex justify-between">
+                    <button class="btn-wf text-[9px]">Anterior</button>
+                    <button class="btn-wf text-[9px] btn-wf-primary">Finalizar</button>
+                </div>
+            </div>
+
+            <!-- 10. Analizando... -->
+            <div id="node-10" class="node w-[180px] p-4" style="left: 1950px; top: 240px;">
+                <div class="text-[10px] text-slate-500 mb-2 flex items-center gap-1">
+                    <span>🧠</span> Analizando...
+                </div>
+                <div class="text-[9px] text-slate-600 leading-tight mb-4">
+                    Estamos buscando la mejor estrategia para tu negocio...
+                </div>
+                <div class="space-y-2 text-[9px] text-slate-700 mb-6">
+                    <div class="flex items-center gap-1 text-emerald-600">✓ <span class="text-slate-600">Analizando
+                            producto</span></div>
+                    <div class="flex items-center gap-1 text-emerald-600">✓ <span class="text-slate-600">Analizando
+                            cliente</span></div>
+                    <div class="flex items-center gap-1 text-emerald-600">✓ <span class="text-slate-600">Analizando
+                            precio</span></div>
+                    <div class="flex items-center gap-1 text-emerald-600">✓ <span class="text-slate-600">Analizando
+                            ubicación</span></div>
+                    <div class="flex items-center gap-1 text-blue-600 font-semibold">• Definiendo estrategia</div>
+                </div>
+                <div class="text-center">
+                    <button class="btn-wf text-[9px] w-full">continuar</button>
+                </div>
+            </div>
+
+            <!-- 11. TU ESTRATEGIA (Arriba Derecha con Modal Abierto) -->
+            <div id="node-11" class="node w-[210px] p-4 relative" style="left: 2450px; top: 100px;">
+                <div class="flex items-center gap-1 text-[10px] font-bold text-slate-800 mb-1">
+                    <span class="text-pink-500">🧠</span> TU ESTRATEGIA
+                </div>
+                <p class="text-[8px] text-slate-500 leading-tight mb-2">
+                    Esta estrategia fue creada para ayudarte a conseguir mensajes de WhatsApp clientes para tus cuadros
+                    personalizados.
+                </p>
+                <button class="btn-wf text-[8px] mb-3">Editar</button>
+
+                <div class="border-t pt-2 text-[8px] space-y-2">
+                    <div>
+                        <div class="font-bold text-slate-700">OBJETIVO</div>
+                        <div class="text-slate-600 flex items-center gap-1">
+                            <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span> Conseguir clientes
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Modal Flotante "¿Qué quieres cambiar?" -->
+                <div
+                    class="absolute -left-12 top-20 w-[180px] bg-white border border-slate-800 rounded-xl p-3 shadow-2xl z-30">
+                    <div class="text-[9px] font-bold text-center mb-2">¿Qué quieres cambiar?</div>
+                    <div class="space-y-1 text-[8px] text-slate-700 mb-3">
+                        <div><input type="radio" name="mc"> Producto</div>
+                        <div><input type="radio" name="mc"> Público</div>
+                        <div><input type="radio" name="mc"> Precio</div>
+                        <div><input type="radio" name="mc"> Ubicación</div>
+                        <div><input type="radio" name="mc"> Objetivo</div>
+                        <div><input type="radio" name="mc"> Toda la estrategia</div>
+                    </div>
+                    <div class="text-center">
+                        <button class="btn-wf text-[8px] bg-slate-100">continuar</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 12. TU ESTRATEGIA (Principal Centro) -->
+            <div id="node-12" class="node w-[230px] p-4" style="left: 2150px; top: 1080px;">
+                <div class="flex items-center gap-1 text-[11px] font-bold text-slate-800 mb-1">
+                    <span class="text-pink-500">🧠</span> TU ESTRATEGIA
+                </div>
+                <p class="text-[8px] text-slate-500 leading-tight mb-2">
+                    Esta estrategia fue creada para ayudarte a conseguir mensajes de WhatsApp clientes para tus cuadros
+                    personalizados.
+                </p>
+                <div class="text-center mb-3">
+                    <button class="btn-wf text-[8px] px-4">Editar</button>
+                </div>
+
+                <div class="space-y-2 text-[8px] text-slate-700 border-t pt-2">
+                    <div>
+                        <div class="font-bold text-slate-800">OBJETIVO</div>
+                        <div class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+                            Conseguir clientes</div>
+                    </div>
+                    <div>
+                        <div class="font-bold text-slate-800">📢 CAMPAÑA RECOMENDADA</div>
+                        <div>Generación de prospectos</div>
+                        <div class="font-semibold">CANAL PRINCIPAL</div>
+                        <div>WhatsApp</div>
+                    </div>
+                    <div>
+                        <div class="font-bold text-slate-800">PÚBLICO</div>
+                        <div>25-55 años</div>
+                    </div>
+                    <div>
+                        <div class="font-bold text-slate-800">UBICACIÓN</div>
+                        <div>Tuxtla Gutiérrez + 15 km</div>
+                    </div>
+                    <div>
+                        <div class="font-bold text-slate-800">INTERESES</div>
+                        <div>Decoración · Hogar · Regalos · Fotografía</div>
+                    </div>
+                    <div>
+                        <div class="font-bold text-slate-800">CREATIVO</div>
+                        <div>Antes / Después</div>
+                    </div>
+                </div>
+
+                <div class="flex gap-2 mt-4">
+                    <button class="btn-wf text-[8px] flex-1">ir a creativo</button>
+                    <button class="btn-wf text-[8px] flex-1">ir a copy</button>
+                </div>
+            </div>
+
+            <!-- 13. CREATIVO RECOMENDADO (Paso Medio) -->
+            <div id="node-13" class="node w-[220px] p-4" style="left: 2500px; top: 1080px;">
+                <div class="text-[10px] font-bold text-slate-800 mb-1 flex items-center gap-1">
+                    <span>🎨</span> CREATIVO RECOMENDADO
+                </div>
+                <div class="text-[8px] text-slate-600 mb-2">
+                    <span class="font-semibold">Formato:</span> Antes / Después<br>
+                    <span class="font-semibold">Objetivo:</span> Mostrar el resultado real del producto.
+                </div>
+                <div
+                    class="border-2 border-slate-800 rounded-lg h-28 mb-3 flex items-center justify-center bg-slate-50">
+                    <i class="fa-regular fa-image text-2xl text-slate-300"></i>
+                </div>
+                <div class="space-y-1 text-[8px] text-slate-700 mb-3">
+                    <div class="font-semibold">TIPO DE IMAGEN</div>
+                    <div><input type="radio" name="ti"> Fotografía real del producto</div>
+                    <div><input type="radio" name="ti"> Imagen generada por IA</div>
+                    <div><input type="radio" name="ti"> Subir imagen</div>
+                </div>
+                <div class="text-center">
+                    <button class="btn-wf text-[8px] w-full mb-1">generar imagen</button>
+                </div>
+            </div>
+
+            <!-- 14. CREATIVO RECOMENDADO (Vista Final Insta Post) -->
+            <div id="node-14" class="node w-[210px] p-4 opacity-60" style="left: 2800px; top: 1080px;">
+                <div class="text-[10px] font-bold text-slate-800 mb-1 flex items-center gap-1">
+                    <span>🎨</span> CREATIVO RECOMENDADO
+                </div>
+                <div class="text-[8px] text-slate-500 mb-2">
+                    Formato: Antes / Después<br>
+                    Objetivo: Mostrar el resultado real...
+                </div>
+                <div class="border-2 border-slate-800 rounded-lg h-32 mb-3 bg-white flex flex-col justify-between p-2">
+                    <div class="text-[7px] text-slate-400">Formato: Instagram Post<br>1080 x 1080</div>
+                    <div class="text-center text-slate-300"><i class="fa-solid fa-vector-square text-3xl"></i></div>
+                    <div></div>
+                </div>
+                <div class="flex gap-1">
+                    <button class="btn-wf text-[7px] flex-1">generar imagen</button>
+                    <button class="btn-wf text-[7px] flex-1">descargar imagen</button>
+                </div>
+            </div>
+
+            <!-- 15. COPY RECOMENDADO -->
+            <div id="node-15" class="node w-[220px] p-4" style="left: 2500px; top: 1800px;">
+                <div class="text-[10px] font-bold text-slate-800 mb-1 flex items-center gap-1">
+                    <span>✍️</span> COPY RECOMENDADO
+                </div>
+                <div class="text-[8px] font-semibold text-slate-700 mb-1">OBJETIVO</div>
+                <div class="text-[8px] text-slate-600 mb-3">Conseguir clientes</div>
+
+                <div
+                    class="border border-slate-300 rounded-lg p-2.5 bg-slate-50 text-[8px] text-slate-700 space-y-2 mb-3">
+                    <p class="font-semibold">¿Quieres transformar ese espacio?</p>
+                    <p>Creamos cuadros personalizados para darle un toque único a tu hogar. Diseñamos tu cuadro de
+                        acuerdo con tu estilo y espacio.</p>
+                    <p class="font-semibold">📱 Escríbenos por WhatsApp y cotiza el tuyo</p>
+                </div>
+
+                <div class="text-[8px] font-semibold text-slate-700 mb-1">TONO</div>
+                <div class="space-y-0.5 text-[8px] text-slate-600 mb-3">
+                    <div class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-slate-800"></span>
+                        Cercano</div>
+                    <div class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-slate-800"></span>
+                        Profesional</div>
+                    <div class="flex items-center gap-1"><span
+                            class="w-1 h-1 rounded-full border border-slate-600"></span> Divertido</div>
+                    <div class="flex items-center gap-1"><span
+                            class="w-1 h-1 rounded-full border border-slate-600"></span> Inspirador</div>
+                </div>
+
+                <div class="flex gap-2">
+                    <button class="btn-wf text-[8px] flex-1">copiar</button>
+                    <button class="btn-wf text-[8px] flex-1">regenerar</button>
+                </div>
+            </div>
+
+            <!-- 16. TU ESTRATEGIA (Abajo Centro) -->
+            <div id="node-16" class="node w-[210px] p-4" style="left: 2150px; top: 2200px;">
+                <div class="flex items-center gap-1 text-[10px] font-bold text-slate-800 mb-1">
+                    <span class="text-pink-500">🧠</span> TU ESTRATEGIA
+                </div>
+                <p class="text-[8px] text-slate-500 leading-tight mb-2">
+                    Esta estrategia fue creada para ayudarte a conseguir mensajes de WhatsApp clientes para tus cuadros
+                    personalizados.
+                </p>
+                <button class="btn-wf text-[8px] mb-3">Editar</button>
+
+                <div class="space-y-1.5 text-[8px] text-slate-700 border-t pt-2">
+                    <div class="font-bold text-slate-800">OBJETIVO</div>
+                    <div class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+                        Conseguir clientes</div>
+                    <div class="font-bold text-slate-800 mt-1">📢 CAMPAÑA RECOMENDADA</div>
+                    <div>Generación de prospectos</div>
+                    <div class="font-semibold">CANAL PRINCIPAL</div>
+                    <div>WhatsApp</div>
+                    <div class="font-bold text-slate-800 mt-1">PÚBLICO</div>
+                    <div>25-55 años</div>
+                    <div class="font-bold text-slate-800 mt-1">UBICACIÓN</div>
+                    <div>Tuxtla Gutiérrez + 15 km</div>
+                    <div class="font-bold text-slate-800 mt-1">INTERESES</div>
+                    <div>Decoración · Hogar · Regalos · Fotografía</div>
+                    <div class="font-bold text-slate-800 mt-1">CREATIVO</div>
+                    <div>Antes / Después</div>
+                </div>
+
+                <div class="flex gap-2 mt-3">
+                    <button class="btn-wf text-[8px] flex-1">ir a creativo</button>
+                    <button class="btn-wf text-[8px] flex-1">ir a copy</button>
+                </div>
+            </div>
+
+            <!-- 17. Bienvenido La Plataforma (Abajo Izquierda) -->
+            <div id="node-17" class="node w-[170px] p-4 text-center" style="left: 80px; top: 1200px;">
+                <h3 class="font-bold text-xs mb-3 text-slate-800">Bienvenido<br><span
+                        class="text-blue-600">la.plataforma</span></h3>
+                <div class="space-y-2 text-left mb-4">
+                    <div>
+                        <label class="text-[9px] font-medium text-slate-500">Usuario</label>
+                        <div class="input-wf h-5"></div>
+                    </div>
+                    <div>
+                        <label class="text-[9px] font-medium text-slate-500">Password</label>
+                        <div class="input-wf h-5"></div>
+                    </div>
+                </div>
+                <div class="text-[8px] text-slate-400">No tienes cuenta</div>
+            </div>
+
+            <!-- 18. Dashboard con Sidebar (Mi Negocio) -->
+            <div id="node-18" class="node w-[210px] p-3" style="left: 280px; top: 1200px;">
+                <div class="flex items-center justify-between text-[9px] font-bold pb-2 border-b mb-2">
+                    <span>🏠 Inicio</span>
+                    <span class="text-slate-500">👤 Mi negocio</span>
+                </div>
+                <div class="flex gap-2">
+                    <!-- Sidebar menu -->
+                    <div class="w-20 space-y-1.5 text-[7px] text-slate-600 border-r pr-1">
+                        <div class="text-blue-600 font-bold">🏠 Inicio</div>
+                        <div>🎯 Estrategia</div>
+                        <div>🖼️ Contenido</div>
+                        <div>📅 Calendario</div>
+                        <div>📊 Resultados</div>
+                        <div>🔗 Conexiones</div>
+                        <div>⚙️ Config.</div>
+                    </div>
+                    <!-- Content -->
+                    <div class="flex-1 space-y-2">
+                        <div class="text-[8px] font-semibold">Buenos días, Carlos 👋</div>
+                        <div class="text-[7px] text-slate-500">Esto es lo que te recomendamos hacer hoy.</div>
+                        <div class="border rounded-lg p-1.5 bg-slate-50">
+                            <div class="text-[7px] font-bold text-pink-600 flex items-center gap-0.5">🧠 TU ESTRATEGIA
+                                ACTUAL</div>
+                            <div class="text-[6px] text-slate-600 mt-1">
+                                <b>Objetivo:</b> Conseguir clientes<br>
+                                <b>Campaña:</b> Generación prospectos<br>
+                                <b>Canal:</b> WhatsApp<br>
+                                <b>Público:</b> 25-55 años
+                            </div>
+                            <div class="flex gap-1 mt-1.5">
+                                <button class="btn-wf text-[6px] p-0.5">ver estrategia</button>
+                                <button class="btn-wf text-[6px] p-0.5">Editar</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 19. Dashboard Detallado (Mi Negocio Grande) -->
+            <div id="node-19" class="node w-[230px] p-4" style="left: 520px; top: 1200px;">
+                <div class="flex justify-between items-center text-[10px] font-bold border-b pb-2 mb-3">
+                    <span></span>
+                    <span class="text-slate-700">👤 Mi negocio</span>
+                </div>
+                <div class="text-xs font-semibold mb-1">Buenos días, Carlos 👋</div>
+                <div class="text-[9px] text-slate-500 mb-3">Esto es lo que te recomendamos hacer hoy.</div>
+
+                <div class="border-2 border-slate-800 rounded-xl p-2.5 bg-white mb-4">
+                    <div class="text-[8px] font-bold text-pink-600 flex items-center gap-1">🧠 TU ESTRATEGIA ACTUAL
+                    </div>
+                    <div class="text-[8px] text-slate-700 space-y-1 my-2">
+                        <div><b>Objetivo:</b> CONSEGUIR CLIENTES</div>
+                        <div><b>Campaña:</b> Generación de prospectos</div>
+                        <div><b>Canal:</b> WhatsApp</div>
+                        <div><b>Público:</b> 25-55 años</div>
+                        <div class="text-[7px] text-slate-400">Ubicación: Tuxtla Gutiérrez + 15k</div>
+                    </div>
+                    <div class="flex gap-2 mt-2">
+                        <button class="btn-wf text-[8px] flex-1">ver estrategia</button>
+                        <button class="btn-wf text-[8px] flex-1">Editar</button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2 text-[8px]">
+                    <div class="border rounded-lg p-2 bg-slate-50 text-center">
+                        <div class="font-bold">💡 IDEA DE HOY</div>
+                        <div class="text-[7px] text-slate-500 my-1">Antes / Después de una cocina</div>
+                        <button class="btn-wf text-[7px]">Crear</button>
+                    </div>
+                    <div class="border rounded-lg p-2 bg-slate-50 text-center">
+                        <div class="font-bold">📅 PRÓXIMA PUBLICACIÓN</div>
+                        <div class="text-[7px] text-slate-500 my-1">Lunes 9:00 AM</div>
+                        <button class="btn-wf text-[7px]">ver</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 20. STICKY NOTE (Nota Adhesiva Amarilla) -->
+            <div id="node-20" class="node sticky-note w-[220px] h-[220px] flex flex-col justify-between"
+                style="left: 1350px; top: 2150px;">
+                <div class="text-center mt-6">
+                    crea estrategia basado en ideas en el dashboard tomando los patrones generados al principio
+                </div>
+                <div class="text-right text-xs font-sans text-amber-800 font-bold">10 Sep</div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Barra de Controles Flotante -->
+    <div class="controls-bar">
+        <button onclick="zoomIn()" class="control-btn" title="Acercar"><i class="fa-solid fa-plus"></i></button>
+        <button onclick="zoomOut()" class="control-btn" title="Alejar"><i class="fa-solid fa-minus"></i></button>
+        <button onclick="resetZoom()" class="control-btn" title="Restablecer"><i
+                class="fa-solid fa-expand"></i></button>
+    </div>
+
+    <script>
+        // Configuración de Estado Global del Canvas
+        let scale = 0.55;
+        let pointX = 50;
+        let pointY = 20;
+        let startX = 0;
+        let startY = 0;
+        let isPanning = false;
+
+        const viewport = document.getElementById('viewport');
+        const canvas = document.getElementById('canvas');
+        const svg = document.getElementById('svg-connections');
+
+        // Aplicar Transformación al Canvas
+        function updateTransform() {
+            canvas.style.transform = `translate(${pointX}px, ${pointY}px) scale(${scale})`;
+        }
+
+        // Eventos Pan (Arrastre de Lienzo)
+        viewport.addEventListener('mousedown', (e) => {
+            if (e.target.closest('.node')) return; // No arrastrar si interactúa con un nodo
+            isPanning = true;
+            startX = e.clientX - pointX;
+            startY = e.clientY - pointY;
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (!isPanning) return;
+            pointX = e.clientX - startX;
+            pointY = e.clientY - startY;
+            updateTransform();
+        });
+
+        window.addEventListener('mouseup', () => {
+            isPanning = false;
+        });
+
+        // Evento Zoom con Rueda
+        viewport.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const xs = (e.clientX - pointX) / scale;
+            const ys = (e.clientY - pointY) / scale;
+            const delta = -e.deltaY;
+
+            (delta > 0) ? (scale *= 1.1) : (scale /= 1.1);
+            scale = Math.min(Math.max(0.15, scale), 2.5); // Límites de Zoom
+
+            pointX = e.clientX - xs * scale;
+            pointY = e.clientY - ys * scale;
+
+            updateTransform();
+        }, { passive: false });
+
+        // Controles de Botones
+        function zoomIn() {
+            scale = Math.min(scale * 1.2, 2.5);
+            updateTransform();
+        }
+
+        function zoomOut() {
+            scale = Math.max(scale / 1.2, 0.15);
+            updateTransform();
+        }
+
+        function resetZoom() {
+            scale = 0.55;
+            pointX = 50;
+            pointY = 20;
+            updateTransform();
+        }
+
+        // Definición de las Conexiones/Flechas según la Imagen
+        const connections = [
+            // Cadena de Wizard Superior
+            { from: 'node-1', to: 'node-2' },
+            { from: 'node-2', to: 'node-3' },
+            { from: 'node-3', to: 'node-4' },
+            { from: 'node-4', to: 'node-5' },
+            { from: 'node-5', to: 'node-6' },
+            { from: 'node-6', to: 'node-7' },
+            { from: 'node-7', to: 'node-8' },
+            { from: 'node-8', to: 'node-9' },
+            { from: 'node-9', to: 'node-10' },
+
+            // Conexiones de Selección del Wizard 5 (de opciones a nodo 11)
+            { from: 'node-9', to: 'node-11', curveOffset: -100 },
+            { from: 'node-8', to: 'node-11', curveOffset: -120 },
+            { from: 'node-7', to: 'node-11', curveOffset: -140 },
+            { from: 'node-6', to: 'node-11', curveOffset: -160 },
+            { from: 'node-5', to: 'node-11', curveOffset: -180 },
+            { from: 'node-4', to: 'node-11', curveOffset: -200 },
+
+            // Conexiones del Flujo Inferior / Dashboard
+            { from: 'node-17', to: 'node-18' },
+            { from: 'node-18', to: 'node-19' },
+            { from: 'node-19', to: 'node-20', curveOffset: 50 },
+            { from: 'node-20', to: 'node-16', curveOffset: 30 },
+
+            // Conexiones hacia Estrategia Principal
+            { from: 'node-10', to: 'node-12', curveOffset: 80 },
+            { from: 'node-12', to: 'node-13' },
+            { from: 'node-13', to: 'node-14' },
+
+            // Conexión de Estrategia a Copy
+            { from: 'node-12', to: 'node-15', curveOffset: 60 },
+
+            // Conexiones del Modal / Variaciones
+            { from: 'node-12', to: 'node-16', curveOffset: 40 },
+            { from: 'node-16', to: 'node-15' }
+        ];
+
+        // Función para Dibujar Flechas SVG Curvas
+        function drawConnections() {
+            // Limpiar paths existentes manteniendo la definición de marcas
+            const existingPaths = svg.querySelectorAll('path');
+            existingPaths.forEach(p => p.remove());
+
+            connections.forEach(conn => {
+                const fromEl = document.getElementById(conn.from);
+                const toEl = document.getElementById(conn.to);
+
+                if (!fromEl || !toEl) return;
+
+                const fromRect = {
+                    x: fromEl.offsetLeft,
+                    y: fromEl.offsetTop,
+                    w: fromEl.offsetWidth,
+                    h: fromEl.offsetHeight
+                };
+
+                const toRect = {
+                    x: toEl.offsetLeft,
+                    y: toEl.offsetTop,
+                    w: toEl.offsetWidth,
+                    h: toEl.offsetHeight
+                };
+
+                // Puntos de Origen y Destino Calculados
+                let startX = fromRect.x + fromRect.w;
+                let startY = fromRect.y + fromRect.h / 2;
+                let endX = toRect.x;
+                let endY = toRect.y + toRect.h / 2;
+
+                // Ajustes de salida/entrada según ubicación relativa
+                if (fromRect.x > toRect.x) {
+                    startX = fromRect.x;
+                    endX = toRect.x + toRect.w;
+                }
+
+                const dx = endX - startX;
+                const dy = endY - startY;
+
+                // Curva Bézier
+                const curveOffset = conn.curveOffset || 0;
+                const controlX1 = startX + dx * 0.5;
+                const controlY1 = startY + curveOffset;
+                const controlX2 = startX + dx * 0.5;
+                const controlY2 = endY + curveOffset;
+
+                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                const d = `M ${startX} ${startY} C ${controlX1} ${controlY1}, ${controlX2} ${controlY2}, ${endX} ${endY}`;
+
+                path.setAttribute('d', d);
+                path.setAttribute('stroke', '#1e293b');
+                path.setAttribute('stroke-width', '2');
+                path.setAttribute('fill', 'none');
+                path.setAttribute('marker-end', 'url(#arrow)');
+                path.setAttribute('stroke-linecap', 'round');
+
+                svg.appendChild(path);
+            });
+        }
+
+        // Inicialización
+        window.onload = () => {
+            updateTransform();
+            drawConnections();
+        };
+
+        // Redibujar en caso de redimensionamiento
+        window.onresize = () => {
+            drawConnections();
+        };
+    </script>
+</body>
+
+</html>
