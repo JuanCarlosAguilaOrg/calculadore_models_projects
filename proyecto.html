@@ -418,8 +418,11 @@
 
 <body>
     <nav class="topnav">
-        <div class="brand">Vulpex · MVP</div><a class="navlink" href="index.html">⌂ Home</a><a class="navlink active"
-            href="proyecto.html">▦ Proyecto</a>
+        <div class="brand">Vulpex · MVP</div>
+        <a class="navlink" href="index.html">⌂ Home</a>
+        <a class="navlink active" href="proyecto.html">▦ Proyecto</a>
+
+        <a class="navlink active" href="diagrama.html">▦ Diagrama</a>
     </nav>
     <section class="project-head">
         <div class="crumb">Proyectos / MVP Marketing IA / Cronograma</div>
@@ -436,157 +439,157 @@
     </section>
     <div id="app"></div>
 
-<div class="legend">
-    <span>
-        <i style="background:#6554c0"></i>
-        Epic
-    </span>
+    <div class="legend">
+        <span>
+            <i style="background:#6554c0"></i>
+            Epic
+        </span>
 
-    <span>
-        <i style="background:#0c66e4"></i>
-        Tarea
-    </span>
+        <span>
+            <i style="background:#0c66e4"></i>
+            Tarea
+        </span>
 
-    <span>
-        <i style="background:#22a06b"></i>
-        Completado
-    </span>
+        <span>
+            <i style="background:#22a06b"></i>
+            Completado
+        </span>
 
-    <span>
-        <i style="background:#ff8b00"></i>
-        Hito
-    </span>
+        <span>
+            <i style="background:#ff8b00"></i>
+            Hito
+        </span>
 
-    <span>
-        Fuente: <b>proyecto.json</b>
-    </span>
-</div>
+        <span>
+            Fuente: <b>proyecto.json</b>
+        </span>
+    </div>
 
-<script>
-    let D = null;
-    let W = 38;
+    <script>
+        let D = null;
+        let W = 38;
 
-    const $ = x => document.getElementById(x);
+        const $ = x => document.getElementById(x);
 
-    const dt = x =>
-        new Date(x + "T12:00:00");
+        const dt = x =>
+            new Date(x + "T12:00:00");
 
-    const diff = (a, b) =>
-        Math.round((b - a) / 86400000);
+        const diff = (a, b) =>
+            Math.round((b - a) / 86400000);
 
-    const esc = s =>
-        String(s).replace(
-            /[&<>"']/g,
-            m => ({
-                "&": "&amp;",
-                "<": "&lt;",
-                ">": "&gt;",
-                "\"": "&quot;",
-                "'": "&#39;"
-            }[m])
-        );
+        const esc = s =>
+            String(s).replace(
+                /[&<>"']/g,
+                m => ({
+                    "&": "&amp;",
+                    "<": "&lt;",
+                    ">": "&gt;",
+                    "\"": "&quot;",
+                    "'": "&#39;"
+                }[m])
+            );
 
-    const fmt = x =>
-        new Intl.DateTimeFormat(
-            "es-MX",
-            {
-                day: "2-digit",
-                month: "short"
+        const fmt = x =>
+            new Intl.DateTimeFormat(
+                "es-MX",
+                {
+                    day: "2-digit",
+                    month: "short"
+                }
+            ).format(dt(x));
+
+
+        function days(a, b) {
+
+            let z = [];
+
+            for (
+                let d = new Date(a);
+                d <= b;
+                d.setDate(d.getDate() + 1)
+            ) {
+                z.push(new Date(d));
             }
-        ).format(dt(x));
 
-
-    function days(a, b) {
-
-        let z = [];
-
-        for (
-            let d = new Date(a);
-            d <= b;
-            d.setDate(d.getDate() + 1)
-        ) {
-            z.push(new Date(d));
+            return z;
         }
 
-        return z;
-    }
+
+        function render() {
+
+            let p = D.project;
+
+            let s = dt(p.startDate);
+            let e = dt(p.endDate);
+
+            let ds = days(s, e);
+
+            let months = [];
 
 
-    function render() {
+            /*
+             * Construcción de meses
+             */
+            ds.forEach(d => {
 
-        let p = D.project;
+                let k =
+                    d.getFullYear() +
+                    "-" +
+                    d.getMonth();
 
-        let s = dt(p.startDate);
-        let e = dt(p.endDate);
-
-        let ds = days(s, e);
-
-        let months = [];
-
-
-        /*
-         * Construcción de meses
-         */
-        ds.forEach(d => {
-
-            let k =
-                d.getFullYear() +
-                "-" +
-                d.getMonth();
-
-            let m =
-                months.find(x => x.k === k);
+                let m =
+                    months.find(x => x.k === k);
 
 
-            if (!m) {
+                if (!m) {
 
-                m = {
-                    k,
-                    n: new Intl.DateTimeFormat(
-                        "es-MX",
-                        {
-                            month: "long",
-                            year: "numeric"
-                        }
-                    ).format(d),
+                    m = {
+                        k,
+                        n: new Intl.DateTimeFormat(
+                            "es-MX",
+                            {
+                                month: "long",
+                                year: "numeric"
+                            }
+                        ).format(d),
 
-                    c: 0
-                };
+                        c: 0
+                    };
 
-                months.push(m);
-            }
+                    months.push(m);
+                }
 
-            m.c++;
-        });
-
-
-        /*
-         * Información general del proyecto
-         */
-        $("name").textContent =
-            p.name;
-
-        $("key").textContent =
-            p.key;
-
-        $("desc").textContent =
-            p.description;
-
-        $("status").textContent =
-            p.status;
-
-        $("start").textContent =
-            fmt(p.startDate);
-
-        $("end").textContent =
-            fmt(p.endDate);
+                m.c++;
+            });
 
 
-        /*
-         * Encabezado de meses
-         */
-        let mh = months
-            .map(m => `
+            /*
+             * Información general del proyecto
+             */
+            $("name").textContent =
+                p.name;
+
+            $("key").textContent =
+                p.key;
+
+            $("desc").textContent =
+                p.description;
+
+            $("status").textContent =
+                p.status;
+
+            $("start").textContent =
+                fmt(p.startDate);
+
+            $("end").textContent =
+                fmt(p.endDate);
+
+
+            /*
+             * Encabezado de meses
+             */
+            let mh = months
+                .map(m => `
                 <div
                     class="month"
                     style="width:${m.c * W}px"
@@ -594,41 +597,41 @@
                     ${m.n}
                 </div>
             `)
-            .join('');
+                .join('');
 
 
-        /*
-         * Encabezado de días
-         */
-        let dh = ds
-            .map(d => {
+            /*
+             * Encabezado de días
+             */
+            let dh = ds
+                .map(d => {
 
-                let wd =
-                    d.getDay();
+                    let wd =
+                        d.getDay();
 
-                let today =
-                    new Date();
+                    let today =
+                        new Date();
 
-                let iso =
-                    d.toISOString()
-                        .slice(0, 10);
+                    let iso =
+                        d.toISOString()
+                            .slice(0, 10);
 
-                let c =
-                    (wd === 0 || wd === 6
-                        ? ' weekend'
-                        : '') +
+                    let c =
+                        (wd === 0 || wd === 6
+                            ? ' weekend'
+                            : '') +
 
-                    (
-                        iso ===
-                        today
-                            .toISOString()
-                            .slice(0, 10)
-                            ? ' today'
-                            : ''
-                    );
+                        (
+                            iso ===
+                                today
+                                    .toISOString()
+                                    .slice(0, 10)
+                                ? ' today'
+                                : ''
+                        );
 
 
-                return `
+                    return `
                     <div class="day${c}">
                         ${d.getDate()}
                         <br>
@@ -644,18 +647,18 @@
                     </div>
                 `;
 
-            })
-            .join('');
+                })
+                .join('');
 
 
-        /*
-         * Columna izquierda:
-         * número, tarea, estado y progreso
-         */
-        let left = D.tasks
-            .map((t, i) => {
+            /*
+             * Columna izquierda:
+             * número, tarea, estado y progreso
+             */
+            let left = D.tasks
+                .map((t, i) => {
 
-                return `
+                    return `
                     <div class="row">
 
                         <div class="cell num">
@@ -674,29 +677,27 @@
                             ></span>
 
 
-                            ${
-                                t.type === 'epic'
-                                    ? `
+                            ${t.type === 'epic'
+                            ? `
                                         <button
                                             class="expand"
                                         >
                                             ⌄
                                         </button>
                                     `
-                                    : ''
-                            }
+                            : ''
+                        }
 
 
                             <span
                                 class="icon ${t.type}"
                             >
-                                ${
-                                    t.type === 'milestone'
-                                        ? '◆'
-                                        : t.type === 'epic'
-                                            ? 'E'
-                                            : 'T'
-                                }
+                                ${t.type === 'milestone'
+                            ? '◆'
+                            : t.type === 'epic'
+                                ? 'E'
+                                : 'T'
+                        }
                             </span>
 
 
@@ -714,11 +715,10 @@
                             <span
                                 class="dot"
                                 style="
-                                    ${
-                                        t.status === 'Done'
-                                            ? 'background:#22a06b'
-                                            : ''
-                                    }
+                                    ${t.status === 'Done'
+                            ? 'background:#22a06b'
+                            : ''
+                        }
                                 "
                             ></span>
 
@@ -734,46 +734,46 @@
                     </div>
                 `;
 
-            })
-            .join('');
+                })
+                .join('');
 
 
-        /*
-         * Barras del Gantt
-         */
-        let bars = D.tasks
-            .map(t => {
+            /*
+             * Barras del Gantt
+             */
+            let bars = D.tasks
+                .map(t => {
 
-                let x =
-                    diff(
-                        s,
-                        dt(t.start)
-                    ) * W + 3;
-
-
-                let w =
-                    Math.max(
-                        18,
-                        (
-                            diff(
-                                dt(t.start),
-                                dt(t.end)
-                            ) + 1
-                        ) * W - 7
-                    );
+                    let x =
+                        diff(
+                            s,
+                            dt(t.start)
+                        ) * W + 3;
 
 
-                let c =
-                    t.status === 'Done'
-                        ? ' done'
-                        : t.type === 'epic'
-                            ? ' epic'
-                            : t.type === 'milestone'
-                                ? ' milestone'
-                                : '';
+                    let w =
+                        Math.max(
+                            18,
+                            (
+                                diff(
+                                    dt(t.start),
+                                    dt(t.end)
+                                ) + 1
+                            ) * W - 7
+                        );
 
 
-                return `
+                    let c =
+                        t.status === 'Done'
+                            ? ' done'
+                            : t.type === 'epic'
+                                ? ' epic'
+                                : t.type === 'milestone'
+                                    ? ' milestone'
+                                    : '';
+
+
+                    return `
                     <div class="bar-row">
 
                         <div
@@ -783,28 +783,27 @@
                                 width:${w}px
                             "
                             title="${esc(
-                                t.key +
-                                ' · ' +
-                                t.name +
-                                ' · ' +
-                                t.start +
-                                ' → ' +
-                                t.end +
-                                ' · ' +
-                                t.progress +
-                                '%'
-                            )}"
+                        t.key +
+                        ' · ' +
+                        t.name +
+                        ' · ' +
+                        t.start +
+                        ' → ' +
+                        t.end +
+                        ' · ' +
+                        t.progress +
+                        '%'
+                    )}"
                         >
 
-                            ${
-                                t.type === 'milestone'
-                                    ? ''
-                                    : `
+                            ${t.type === 'milestone'
+                            ? ''
+                            : `
                                         <span>
                                             ${t.progress}%
                                         </span>
                                     `
-                            }
+                        }
 
 
                             <div
@@ -819,21 +818,21 @@
                     </div>
                 `;
 
-            })
-            .join('');
+                })
+                .join('');
 
 
-        /*
-         * Ancho total del timeline
-         */
-        let width =
-            ds.length * W;
+            /*
+             * Ancho total del timeline
+             */
+            let width =
+                ds.length * W;
 
 
-        /*
-         * Construcción completa del Gantt
-         */
-        $("app").innerHTML = `
+            /*
+             * Construcción completa del Gantt
+             */
+            $("app").innerHTML = `
 
             <div class="layout">
 
@@ -916,77 +915,77 @@
         `;
 
 
-        /*
-         * Línea de fecha actual
-         */
-        let today =
-            new Date();
+            /*
+             * Línea de fecha actual
+             */
+            let today =
+                new Date();
 
-        let o =
-            diff(
-                s,
-                today
-            );
+            let o =
+                diff(
+                    s,
+                    today
+                );
 
 
-        if (
-            o >= 0 &&
-            o <= ds.length
-        ) {
+            if (
+                o >= 0 &&
+                o <= ds.length
+            ) {
 
-            $("today").style.left =
-                (o * W) + "px";
+                $("today").style.left =
+                    (o * W) + "px";
+
+            }
 
         }
 
-    }
 
+        /*
+         * Zoom del timeline
+         */
+        function zoom(n) {
 
-    /*
-     * Zoom del timeline
-     */
-    function zoom(n) {
-
-        W =
-            Math.max(
-                24,
-                Math.min(
-                    65,
-                    W + n * 7
-                )
-            );
-
-        render();
-    }
-
-
-    /*
-     * Cargar banco de datos JSON
-     */
-    fetch("proyecto.json")
-
-        .then(r => {
-
-            if (!r.ok) {
-                throw new Error(
-                    "No se pudo cargar proyecto.json"
+            W =
+                Math.max(
+                    24,
+                    Math.min(
+                        65,
+                        W + n * 7
+                    )
                 );
-            }
-
-            return r.json();
-        })
-
-        .then(x => {
-
-            D = x;
 
             render();
+        }
 
-        })
 
-        .catch(e => {
+        /*
+         * Cargar banco de datos JSON
+         */
+        fetch("proyecto.json")
 
-            $("app").innerHTML = `
+            .then(r => {
+
+                if (!r.ok) {
+                    throw new Error(
+                        "No se pudo cargar proyecto.json"
+                    );
+                }
+
+                return r.json();
+            })
+
+            .then(x => {
+
+                D = x;
+
+                render();
+
+            })
+
+            .catch(e => {
+
+                $("app").innerHTML = `
 
                 <div
                     style="
@@ -1014,9 +1013,9 @@
 
             `;
 
-        });
+            });
 
-</script>
-    </body>
+    </script>
+</body>
 
 </html>
