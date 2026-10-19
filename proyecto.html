@@ -404,6 +404,43 @@
             margin-right: 5px
         }
 
+        .json-editor-panel {
+            margin: 18px 20px;
+            padding: 18px;
+            background: #fff;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            box-shadow: 0 1px 3px #091e4220;
+        }
+
+        .json-editor-panel[hidden] { display: none; }
+        .json-editor-heading, .json-editor-actions {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .json-editor-heading h2 { margin: 0 0 6px; font-size: 18px; }
+        .json-editor-heading p { margin: 0 0 14px; color: var(--muted); }
+        #jsonEditor {
+            display: block;
+            width: 100%;
+            min-height: 360px;
+            margin: 12px 0;
+            padding: 14px;
+            border: 1px solid var(--line);
+            border-radius: 6px;
+            background: #0f172a;
+            color: #e2e8f0;
+            font: 12px/1.55 Consolas, "Courier New", monospace;
+            resize: vertical;
+            tab-size: 2;
+        }
+        #jsonMessage { color: var(--muted); font-size: 12px; }
+        #jsonMessage.error { color: #ae2a19; }
+        #jsonMessage.success { color: #16845b; }
+
         @media(max-width:1000px) {
             .layout {
                 grid-template-columns: 360px minmax(650px, 1fr)
@@ -433,8 +470,29 @@
         <div class="toolbar"><button class="btn" onclick="location.reload()">↻ Actualizar</button><button
                 class="btn secondary" onclick="zoom(-1)">− Zoom</button><button class="btn secondary"
                 onclick="zoom(1)">+ Zoom</button>
+            <label class="btn secondary" for="jsonFile" style="display:inline-block">📂 Cargar JSON</label>
+            <input id="jsonFile" type="file" accept=".json,application/json" hidden onchange="loadJsonFile(event)">
+            <button class="btn secondary" onclick="toggleEditor()">✎ Editar JSON</button>
+            <button class="btn secondary" onclick="downloadJson()">⬇ Descargar JSON</button>
+            <button class="btn secondary" onclick="saveJsonToFile()">💾 Guardar archivo</button>
             <div class="summary"><span class="pill">Estado <b id="status">—</b></span><span class="pill">Inicio <b
                         id="start">—</b></span><span class="pill">Entrega <b id="end">—</b></span></div>
+        </div>
+    </section>
+
+    <section id="jsonEditorPanel" class="json-editor-panel" hidden>
+        <div class="json-editor-heading">
+            <div>
+                <h2>Editor del proyecto JSON</h2>
+                <p>Modifica el contenido y pulsa “Aplicar cambios” para actualizar el Gantt.</p>
+            </div>
+            <button class="btn secondary" onclick="toggleEditor(false)">Cerrar</button>
+        </div>
+        <textarea id="jsonEditor" spellcheck="false" aria-label="Contenido JSON del proyecto"></textarea>
+        <div class="json-editor-actions">
+            <span id="jsonMessage" role="status">Los cambios no se aplican hasta validarlos.</span>
+            <button class="btn secondary" onclick="formatJsonEditor()">Formatear JSON</button>
+            <button class="btn" onclick="applyJsonEditor()">✓ Aplicar cambios</button>
         </div>
     </section>
     <div id="app"></div>
@@ -959,8 +1017,129 @@
         }
 
 
+        // Editor y carga de archivos JSON. Todo se procesa localmente en el navegador.
+        let loadedFileName = "proyecto.json";
+        let fileHandle = null;
+
+        function validateProjectData(data) {
+            if (!data || typeof data !== "object" || !data.project || typeof data.project !== "object") {
+                throw new Error('El JSON debe contener un objeto "project".');
+            }
+            if (!Array.isArray(data.tasks)) {
+                throw new Error('El JSON debe contener un arreglo "tasks".');
+            }
+            const requiredProjectFields = ["name", "key", "startDate", "endDate"];
+            const missing = requiredProjectFields.filter(k => !data.project[k]);
+            if (missing.length) throw new Error("Faltan campos en project: " + missing.join(", "));
+            data.tasks.forEach((task, index) => {
+                if (!task || typeof task !== "object" || !task.name || !task.start || !task.end) {
+                    throw new Error(`La tarea ${index + 1} debe tener name, start y end.`);
+                }
+            });
+            return data;
+        }
+
+        function setJsonMessage(message, type = "") {
+            const el = $("jsonMessage");
+            if (!el) return;
+            el.textContent = message;
+            el.className = type;
+        }
+
+        function toggleEditor(force) {
+            const panel = $("jsonEditorPanel");
+            const shouldOpen = typeof force === "boolean" ? force : panel.hidden;
+            panel.hidden = !shouldOpen;
+            if (shouldOpen) {
+                $("jsonEditor").value = JSON.stringify(D || {}, null, 2);
+                setJsonMessage("Edita el JSON y valida antes de aplicar los cambios.");
+                panel.scrollIntoView({ behavior: "smooth", block: "start" });
+                $("jsonEditor").focus();
+            }
+        }
+
+        async function loadJsonFile(event) {
+            const file = event.target.files && event.target.files[0];
+            if (!file) return;
+            try {
+                const text = await file.text();
+                const data = validateProjectData(JSON.parse(text));
+                D = data;
+                loadedFileName = file.name || "proyecto.json";
+                render();
+                $("jsonEditor").value = JSON.stringify(D, null, 2);
+                setJsonMessage(`Archivo cargado: ${loadedFileName} (${D.tasks.length} tareas).`, "success");
+                toggleEditor(true);
+            } catch (error) {
+                alert("No se pudo cargar el JSON: " + error.message);
+            } finally {
+                event.target.value = "";
+            }
+        }
+
+        function applyJsonEditor() {
+            try {
+                const data = validateProjectData(JSON.parse($("jsonEditor").value));
+                D = data;
+                render();
+                $("jsonEditor").value = JSON.stringify(D, null, 2);
+                setJsonMessage(`Cambios aplicados correctamente. ${D.tasks.length} tareas cargadas. Descarga o guarda el archivo para conservarlos.`, "success");
+            } catch (error) {
+                setJsonMessage("JSON no válido: " + error.message, "error");
+            }
+        }
+
+        function formatJsonEditor() {
+            try {
+                $("jsonEditor").value = JSON.stringify(JSON.parse($("jsonEditor").value), null, 2);
+                setJsonMessage("JSON formateado correctamente.", "success");
+            } catch (error) {
+                setJsonMessage("No se puede formatear: " + error.message, "error");
+            }
+        }
+
+        function downloadJson() {
+            if (!D) return alert("Primero carga un archivo JSON o espera a que se cargue proyecto.json.");
+            const blob = new Blob([JSON.stringify(D, null, 2) + "\n"], { type: "application/json;charset=utf-8" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = loadedFileName.toLowerCase().endsWith(".json") ? loadedFileName : "proyecto.json";
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(url);
+            setJsonMessage("JSON descargado. Reemplaza el archivo anterior si quieres conservar la versión actualizada.", "success");
+        }
+
+        async function saveJsonToFile() {
+            if (!D) return alert("Primero carga un archivo JSON o espera a que se cargue proyecto.json.");
+            const content = JSON.stringify(D, null, 2) + "\n";
+            // En navegadores compatibles, permite elegir el archivo destino y guardarlo directamente.
+            if (window.showSaveFilePicker) {
+                try {
+                    const handle = await window.showSaveFilePicker({
+                        suggestedName: loadedFileName || "proyecto.json",
+                        types: [{ description: "Archivo JSON", accept: { "application/json": [".json"] } }]
+                    });
+                    const writable = await handle.createWritable();
+                    await writable.write(content);
+                    await writable.close();
+                    fileHandle = handle;
+                    loadedFileName = handle.name || loadedFileName;
+                    setJsonMessage("Archivo guardado correctamente: " + loadedFileName, "success");
+                    return;
+                } catch (error) {
+                    if (error.name === "AbortError") return;
+                    console.warn("No fue posible guardar directamente; se descargará el archivo.", error);
+                }
+            }
+            downloadJson();
+        }
+
         /*
-         * Cargar banco de datos JSON
+         * Carga inicial opcional desde proyecto.json cuando se ejecuta mediante servidor local.
+         * Si fetch falla, el usuario todavía puede usar “Cargar JSON”.
          */
         fetch("proyecto.json")
 
@@ -1001,8 +1180,8 @@
 
                     <br><br>
 
-                    Usa Live Server
-                    o un servidor local.
+                    Puedes usar “Cargar JSON” para seleccionar el archivo manualmente.
+                    Para la carga automática, abre esta página con Live Server o un servidor local.
 
                     <br><br>
 
